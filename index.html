@@ -95,24 +95,51 @@ let currentFilter = 'all';
 function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function initials(f,l){ return ((f||'')[0]||'').toUpperCase()+((l||'')[0]||'').toUpperCase(); }
 
+// UPDATED CSV parser
 function parseCSV(text){
-  const lines = text.trim().split(/\r?\n/);
-  if(lines.length < 2) return [];
-  const headers = lines[0].split(',').map(h=>h.trim().toLowerCase());
-  const iFirst = headers.findIndex(h=>h.includes('first'));
-  const iLast = headers.findIndex(h=>h.includes('last'));
-  const iCat = headers.findIndex(h=>h.includes('cat')||h.includes('race'));
-  const iPaid = headers.findIndex(h=>h.includes('paid')||h.includes('status'));
+  const lines=text.trim().split(/\r?\n/); if(lines.length<2) return null;
+  const headers=lines[0].split(',').map(h=>h.trim().replace(/^"|"$/g,'').toLowerCase());
   
+  const col=(...kw)=>headers.findIndex(h=>kw.some(k=>h.includes(k)));
+  
+  // Smarter column detection
+  const iFirst=col('first name','first','name'); 
+  const iLast=col('last name','last');
+  const iGender=col('gender'); const iDob=col('birth','dob');
+  const iAddr=col('address'); const iCat=col('race','category','event');
+  const iWA=col('whatsapp'); const iContact=col('contact number','contact');
+  const iEmail=col('email'); const iTshirt=col('shirt','size');
+  const iPaid=col('paid','payment','status');
+
   return lines.slice(1).map(line=>{
-    const cols = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c=>c.replace(/^"|"$/g,'').trim());
-    const paidStatus = (cols[iPaid]||'').toLowerCase();
-    const isPaid = (paidStatus === 'yes' || paidStatus === 'paid' || paidStatus === 'true' || paidStatus === '1');
-    return { 
-      firstName: cols[iFirst]||'', lastName: cols[iLast]||'', 
-      category: cols[iCat]||'', paid: isPaid ? 'Paid' : 'Unpaid' 
+    const cols=[]; let cur='',inQ=false;
+    for(let ch of line+','){
+      if(ch==='"'){inQ=!inQ;}
+      else if(ch===','&&!inQ){cols.push(cur.trim());cur='';}
+      else{cur+=ch;}
+    }
+    const g=i=>i>=0?(cols[i]||'').replace(/^"|"$/g,'').trim():'';
+    
+    // Logic: If iLast is -1 (missing), try to treat iFirst as a full "Name" field
+    let fName = g(iFirst);
+    let lName = g(iLast);
+    
+    if (iLast < 0 && fName.includes(' ')) {
+        const parts = fName.split(' ');
+        lName = parts.pop();
+        fName = parts.join(' ');
+    }
+
+    const pr=g(iPaid).toLowerCase();
+    return {
+        firstName: fName, 
+        lastName: lName, 
+        gender:g(iGender), dob:g(iDob), address:g(iAddr), 
+        category:g(iCat), whatsapp:g(iWA), contact:g(iContact), 
+        email:g(iEmail), tshirt:g(iTshirt), 
+        paid:(pr==='yes'||pr==='paid'||pr==='true'||pr==='1'||pr==='y')?'Paid':'Unpaid'
     };
-  }).filter(r => r.firstName);
+  }).filter(r=>r.firstName || r.lastName);
 }
 
 function renderList(){
