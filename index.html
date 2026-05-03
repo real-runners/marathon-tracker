@@ -2,144 +2,123 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
-<title>Marathon Registration Tracker</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Marathon Registration</title>
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  :root {
-    --bg-primary: #ffffff; --bg-secondary: #f5f5f3; --bg-tertiary: #eeede9;
-    --text-primary: #1a1a18; --text-secondary: #6b6b67; --text-hint: #9b9b96;
-    --border-light: rgba(0,0,0,0.08); --border-mid: rgba(0,0,0,0.14);
-    --green-fill: #EAF3DE; --green-border: #97C459; --green-text: #27500A;
-    --red-fill: #FCEBEB; --red-border: #F09595; --red-text: #501313;
-    --blue-strong: #185FA5; --blue-fill: #E6F1FB; --blue-text: #0C447C;
-    --font: -apple-system, 'Segoe UI', sans-serif;
-  }
-  html, body { height: 100%; font-family: var(--font); background: var(--bg-tertiary); color: var(--text-primary); }
-  #app { max-width: 480px; margin: 0 auto; min-height: 100vh; background: var(--bg-primary); display: flex; flex-direction: column; }
-  .top-bar { padding: 14px 16px; border-bottom: 0.5px solid var(--border-light); }
-  .app-title { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 600; margin-bottom: 10px; }
-  .event-badge { font-size: 11px; background: var(--bg-secondary); padding: 2px 8px; border-radius: 999px; color: var(--text-secondary); }
-  .filter-row { display: flex; gap: 6px; }
-  .filter-btn { font-size: 13px; padding: 5px 14px; border-radius: 999px; border: 0.5px solid var(--border-light); background: transparent; cursor: pointer; }
-  .active-all { background: var(--bg-tertiary); }
-  .active-paid { background: var(--green-fill); border-color: var(--green-border); color: var(--green-text); }
-  .active-unpaid { background: var(--red-fill); border-color: var(--red-border); color: var(--red-text); }
-  .search-bar { padding: 10px 16px; border-bottom: 0.5px solid var(--border-light); }
-  .search-bar input { width: 100%; padding: 9px; border-radius: 8px; border: 0.5px solid var(--border-light); background: var(--bg-secondary); }
-  .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 12px 16px; border-bottom: 0.5px solid var(--border-light); }
-  .stat-card { background: var(--bg-secondary); padding: 10px; text-align: center; border-radius: 8px; }
-  .stat-value { font-size: 20px; font-weight: 600; }
-  .runner-list { flex: 1; padding-bottom: 20px; }
-  .runner-card { display: flex; align-items: center; padding: 12px 16px; border-bottom: 0.5px solid var(--border-light); gap: 12px; }
-  .runner-avatar { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; flex-shrink: 0; }
-  .runner-info { flex: 1; min-width: 0; }
-  .runner-name { font-size: 14px; font-weight: 500; }
-  .runner-meta { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
-  .status-badge { font-size: 11px; font-weight: 500; padding: 4px 10px; border-radius: 999px; }
-  .badge-paid { background: var(--green-fill); color: var(--green-text); border: 0.5px solid var(--green-border); }
-  .badge-unpaid { background: var(--red-fill); color: var(--red-text); border: 0.5px solid var(--red-border); }
-  .admin-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 100; align-items: flex-end; justify-content: center; }
-  .admin-overlay.open { display: flex; }
-  .admin-sheet { background: var(--bg-primary); border-radius: 20px 20px 0 0; padding: 16px 16px 40px; width: 100%; max-width: 480px; }
-  .admin-input { width: 100%; padding: 10px; border: 0.5px solid var(--border-mid); border-radius: 8px; margin-bottom: 10px; }
+  :root { --bg:#fff; --text:#1a1a18; --green:#27500A; --green-bg:#EAF3DE; --red:#501313; --red-bg:#FCEBEB; --border:rgba(0,0,0,0.08); }
+  body { font-family: -apple-system, sans-serif; background: #eeede9; color: var(--text); margin: 0; }
+  #app { max-width: 480px; margin: 0 auto; min-height: 100vh; background: var(--bg); display: flex; flex-direction: column; }
+  .header { padding: 20px; border-bottom: 1px solid var(--border); }
+  .title { font-weight: 700; font-size: 18px; margin-bottom: 10px; }
+  .controls { display: flex; gap: 8px; margin-bottom: 15px; }
+  button { padding: 8px 16px; border-radius: 20px; border: 1px solid var(--border); background: #f5f5f3; cursor: pointer; font-size: 13px; }
+  button.active { background: #e0e0e0; font-weight: 600; }
+  .stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; padding: 0 20px 20px; }
+  .stat { background: #f5f5f3; padding: 10px; text-align: center; border-radius: 8px; }
+  .stat-val { font-size: 18px; font-weight: 700; }
+  .runner { display: flex; align-items: center; padding: 15px 20px; border-bottom: 1px solid var(--border); }
+  .info { flex: 1; }
+  .name { font-weight: 600; }
+  .km { font-size: 13px; color: #666; }
+  .status { padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+  .paid { background: var(--green-bg); color: var(--green); }
+  .unpaid { background: var(--red-bg); color: var(--red); }
+  .admin-bar { padding: 10px 20px; font-size: 11px; color: #888; display: flex; justify-content: space-between; align-items: center; }
 </style>
 </head>
 <body>
 <div id="app">
-  <div class="top-bar">
-    <div class="app-title">Race Registration <span class="event-badge" id="event-badge">My Marathon</span></div>
-    <div class="filter-row">
-      <button class="filter-btn active-all" id="f-all" onclick="setFilter('all')">All</button>
-      <button class="filter-btn" id="f-paid" onclick="setFilter('paid')">Paid</button>
-      <button class="filter-btn" id="f-unpaid" onclick="setFilter('unpaid')">Unpaid</button>
+  <div class="header">
+    <div class="title" id="event-name">Marathon Registration</div>
+    <div class="controls">
+      <button class="active" id="f-all" onclick="setFilter('all')">All</button>
+      <button id="f-paid" onclick="setFilter('paid')">Paid</button>
+      <button id="f-unpaid" onclick="setFilter('unpaid')">Unpaid</button>
     </div>
+    <input type="text" id="search" placeholder="Search name..." style="width:100%; padding:8px; border-radius:8px; border:1px solid #ddd;" oninput="renderList()">
   </div>
-  <div class="search-bar"><input type="search" id="search-input" placeholder="Search by name..." oninput="renderList()" /></div>
-  <div class="stats-row">
-    <div class="stat-card"><div class="stat-value" id="stat-total">0</div><div style="font-size:10px">Total</div></div>
-    <div class="stat-card"><div class="stat-value" id="stat-paid" style="color:var(--green-text)">0</div><div style="font-size:10px">Paid</div></div>
-    <div class="stat-card"><div class="stat-value" id="stat-unpaid" style="color:var(--red-text)">0</div><div style="font-size:10px">Unpaid</div></div>
+  <div class="stats">
+    <div class="stat">Total<br><span class="stat-val" id="total">0</span></div>
+    <div class="stat">Paid<br><span class="stat-val" id="paid">0</span></div>
+    <div class="stat">Unpaid<br><span class="stat-val" id="unpaid">0</span></div>
   </div>
-  <div class="runner-list" id="runner-list"></div>
+  <div id="list"></div>
+  <div class="admin-bar">
+    <span id="update-time">Ready</span>
+    <button onclick="configAdmin()">⚙ Settings</button>
+  </div>
 </div>
 
 <script>
-const COLORS = [{bg:'#E6F1FB',color:'#0C447C'},{bg:'#EAF3DE',color:'#27500A'},{bg:'#FAECE7',color:'#712B13'}];
-function avatarColor(n){ let h=0; for(let c of (n||'')) h=(h*31+c.charCodeAt(0))&0xffff; return COLORS[h%COLORS.length]; }
-function initials(f,l){ return ((f||'')[0]||'').toUpperCase()+((l||'')[0]||'').toUpperCase(); }
-function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-
-let allData=[];
-let currentFilter='all';
-
-function renderList(){
-  const search = document.getElementById('search-input').value.toLowerCase();
-  const filtered = allData.filter(r=>{
-    const name = (r.firstName+' '+r.lastName).toLowerCase();
-    return (currentFilter==='all' || r.paid.toLowerCase()===currentFilter) && (!search || name.includes(search));
-  });
-  
-  document.getElementById('stat-total').textContent = allData.length;
-  document.getElementById('stat-paid').textContent = allData.filter(r=>r.paid==='Paid').length;
-  document.getElementById('stat-unpaid').textContent = allData.filter(r=>r.paid==='Unpaid').length;
-  
-  document.getElementById('runner-list').innerHTML = filtered.map(r=>{
-    // Clean up name: only show unique parts if firstName and lastName are identical
-    let displayName = (r.firstName + ' ' + r.lastName).trim();
-    if (r.firstName.toLowerCase() === r.lastName.toLowerCase()) displayName = r.firstName;
-
-    const col = avatarColor(displayName);
-    return `<div class="runner-card">
-      <div class="runner-avatar" style="background:${col.bg};color:${col.color}">${initials(r.firstName,r.lastName)}</div>
-      <div class="runner-info">
-        <div class="runner-name">${esc(displayName)}</div>
-        <div class="runner-meta">${esc(r.category)}</div>
-      </div>
-      <span class="status-badge ${r.paid==='Paid'?'badge-paid':'badge-unpaid'}">${r.paid}</span>
-    </div>`;
-  }).join('');
-}
+const SAMPLE = [
+  {firstName:'Arun',lastName:'Menon',category:'10 KM',paid:'Paid'},
+  {firstName:'Divya',lastName:'Krishnan',category:'21 KM',paid:'Paid'},
+  {firstName:'Rahul',lastName:'Nair',category:'5 KM',paid:'Unpaid'}
+];
+let allData = [...SAMPLE];
+let currentFilter = 'all';
 
 function setFilter(f){
-  currentFilter = f;
-  ['all','paid','unpaid'].forEach(k => document.getElementById('f-'+k).className = 'filter-btn' + (k===f ? ' active-'+k : ''));
+  currentFilter=f;
+  document.querySelectorAll('.controls button').forEach(b=>b.classList.remove('active'));
+  document.getElementById('f-'+f).classList.add('active');
   renderList();
 }
 
-function parseCSV(text){
-  const lines = text.trim().split(/\r?\n/); if(lines.length<2) return [];
-  const headers = lines[0].split(',').map(h=>h.trim().replace(/^"|"$/g,'').toLowerCase());
-  const col=(...kw)=>headers.findIndex(h=>kw.some(k=>h.includes(k)));
-  const iFirst=col('first name','first','name'); const iLast=col('last name','last');
-  const iCat=col('cat','race','event'); const iPaid=col('paid','status');
+function renderList(){
+  const q = document.getElementById('search').value.toLowerCase();
+  const filtered = allData.filter(r => {
+    const name = (r.firstName + ' ' + r.lastName).toLowerCase();
+    const matchType = (currentFilter === 'all' || r.paid.toLowerCase() === currentFilter);
+    return matchType && name.includes(q);
+  });
   
-  return lines.slice(1).map(line=>{
-    const cols = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c=>c.replace(/^"|"$/g,'').trim());
-    const paidStatus = (cols[iPaid]||'').toLowerCase();
-    const isPaid = (paidStatus === 'yes' || paidStatus === 'paid' || paidStatus === 'true' || paidStatus === '1' || paidStatus === 'y');
-    return { 
-        firstName: cols[iFirst]||'', 
-        lastName: (iLast >= 0) ? (cols[iLast]||'') : '', 
-        category: cols[iCat]||'', 
-        paid: isPaid ? 'Paid' : 'Unpaid' 
-    };
-  }).filter(r => r.firstName);
+  document.getElementById('total').textContent = allData.length;
+  document.getElementById('paid').textContent = allData.filter(r=>r.paid==='Paid').length;
+  document.getElementById('unpaid').textContent = allData.filter(r=>r.paid==='Unpaid').length;
+  
+  document.getElementById('list').innerHTML = filtered.map(r => `
+    <div class="runner">
+      <div class="info">
+        <div class="name">${r.firstName} ${r.lastName}</div>
+        <div class="km">${r.category}</div>
+      </div>
+      <div class="status ${r.paid==='Paid'?'paid':'unpaid'}">${r.paid}</div>
+    </div>
+  `).join('');
 }
 
-function fetchSheet(url){
-  fetch(url,{cache:'no-cache'}).then(r=>r.text()).then(text=>{
-    allData = parseCSV(text);
-    renderList();
+function parseCSV(text){
+  const lines = text.split('\n').filter(l=>l.trim());
+  const headers = lines[0].toLowerCase();
+  const iFirst = headers.indexOf('first');
+  const iLast = headers.indexOf('last');
+  const iCat = headers.indexOf('cat');
+  const iPaid = headers.indexOf('paid');
+  
+  return lines.slice(1).map(line => {
+    const c = line.split(',');
+    return { firstName: c[1]||'Unknown', lastName: c[2]||'', category: c[6]||'General', paid: (c[11]||'').toLowerCase().includes('y')?'Paid':'Unpaid' };
   });
 }
 
-(function(){
-  const u=localStorage.getItem('mrt-url');
-  const n=localStorage.getItem('mrt-name');
-  if(n) document.getElementById('event-badge').textContent=n;
-  if(u) fetchSheet(u);
-})();
+function configAdmin(){
+  const url = prompt("Enter Google Sheet CSV URL:", localStorage.getItem('mrt-url')||'');
+  if(url){
+    localStorage.setItem('mrt-url', url);
+    fetch(url).then(r=>r.text()).then(text=>{
+       const data = parseCSV(text);
+       if(data && data.length > 0){ allData = data; renderList(); document.getElementById('update-time').textContent='Live Data'; }
+       else { alert('Could not parse sheet data'); }
+    });
+  } else {
+    localStorage.removeItem('mrt-url');
+    allData = [...SAMPLE];
+    renderList();
+  }
+}
+
+renderList();
 </script>
 </body>
 </html>
