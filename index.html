@@ -16,6 +16,7 @@
     --text-hint: #9b9b96;
     --border-light: rgba(0,0,0,0.08);
     --border-mid: rgba(0,0,0,0.14);
+    --radius-md: 8px;
     --green-fill: #EAF3DE;
     --green-border: #97C459;
     --green-text: #27500A;
@@ -23,8 +24,8 @@
     --red-border: #F09595;
     --red-text: #501313;
     --blue-strong: #185FA5;
-    --blue-text: #0C447C;
     --font: -apple-system, 'Segoe UI', sans-serif;
+    --font-mono: 'SF Mono', 'Fira Mono', monospace;
   }
 
   html, body { height: 100%; font-family: var(--font); background: var(--bg-tertiary); color: var(--text-primary); }
@@ -32,7 +33,7 @@
 
   .top-bar { padding: 14px 16px; border-bottom: 0.5px solid var(--border-light); }
   .app-title { font-size: 15px; font-weight: 600; margin-bottom: 10px; }
-  .event-badge { font-size: 12px; background: var(--bg-secondary); padding: 4px 8px; border-radius: 4px; color: var(--text-secondary); }
+  .event-badge { font-size: 11px; background: var(--bg-secondary); padding: 4px 8px; border-radius: 999px; color: var(--text-secondary); }
   
   .filter-row { display: flex; gap: 6px; margin-top: 10px; }
   .filter-btn { font-size: 13px; padding: 5px 14px; border-radius: 999px; border: 0.5px solid var(--border-light); background: transparent; cursor: pointer; }
@@ -43,17 +44,19 @@
   .search-bar { padding: 10px 16px; border-bottom: 0.5px solid var(--border-light); }
   .search-bar input { width: 100%; padding: 9px; border-radius: 8px; border: 0.5px solid var(--border-light); background: var(--bg-secondary); }
 
-  .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 12px 16px; }
+  .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 12px 16px; border-bottom: 0.5px solid var(--border-light); }
   .stat-card { background: var(--bg-secondary); padding: 10px; text-align: center; border-radius: 8px; }
   .stat-value { font-size: 20px; font-weight: 600; }
 
   .runner-list { flex: 1; padding-bottom: 20px; }
   .runner-card { display: flex; align-items: center; padding: 12px 16px; border-bottom: 0.5px solid var(--border-light); gap: 12px; }
-  .runner-avatar { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; }
+  .runner-avatar { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; flex-shrink: 0; }
+  .runner-info { flex: 1; min-width: 0; }
   .runner-name { font-size: 14px; font-weight: 500; }
-  .status-badge { font-size: 11px; padding: 2px 8px; border-radius: 999px; }
-  .badge-paid   { background: var(--green-fill); color: var(--green-text); }
-  .badge-unpaid { background: var(--red-fill); color: var(--red-text); }
+  .runner-meta { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+  .status-badge { font-size: 11px; font-weight: 500; padding: 4px 10px; border-radius: 999px; flex-shrink: 0; }
+  .badge-paid   { background: var(--green-fill); color: var(--green-text); border: 0.5px solid var(--green-border); }
+  .badge-unpaid { background: var(--red-fill); color: var(--red-text); border: 0.5px solid var(--red-border); }
 
   .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #333; color: #fff; padding: 8px 16px; border-radius: 20px; display: none; }
 </style>
@@ -61,7 +64,7 @@
 <body>
 <div id="app">
   <div class="top-bar">
-    <div class="app-title">Race Registration</div>
+    <div class="app-title" id="app-title">Race Registration</div>
     <div class="event-badge" id="event-badge">Loading...</div>
     <div class="filter-row">
       <button class="filter-btn active-all" id="f-all" onclick="setFilter('all')">All</button>
@@ -85,7 +88,6 @@
 <div class="toast" id="toast"></div>
 
 <script>
-// HARDCODED CONFIGURATION
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSTD04IlJf10BBEbhettYo_z6Rqqcqm6IFg4UL8NUDeRMoJSxfMnOIfk31j9Wv4KwIY3XZh2H39K49A/pub?gid=1547197644&single=true&output=csv";
 const MARATHON_NAME = "Keeranalloor Marathon 2026";
 
@@ -95,51 +97,22 @@ let currentFilter = 'all';
 function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function initials(f,l){ return ((f||'')[0]||'').toUpperCase()+((l||'')[0]||'').toUpperCase(); }
 
-// UPDATED CSV parser
 function parseCSV(text){
-  const lines=text.trim().split(/\r?\n/); if(lines.length<2) return null;
-  const headers=lines[0].split(',').map(h=>h.trim().replace(/^"|"$/g,'').toLowerCase());
-  
+  const lines = text.trim().split(/\r?\n/);
+  if(lines.length < 2) return [];
+  const headers = lines[0].split(',').map(h=>h.trim().replace(/^"|"$/g,'').toLowerCase());
   const col=(...kw)=>headers.findIndex(h=>kw.some(k=>h.includes(k)));
+  const iFirst=col('first name','first','name'); const iLast=col('last name','last');
+  const iCat=col('cat','race','event'); const iPaid=col('paid','status');
   
-  // Smarter column detection
-  const iFirst=col('first name','first','name'); 
-  const iLast=col('last name','last');
-  const iGender=col('gender'); const iDob=col('birth','dob');
-  const iAddr=col('address'); const iCat=col('race','category','event');
-  const iWA=col('whatsapp'); const iContact=col('contact number','contact');
-  const iEmail=col('email'); const iTshirt=col('shirt','size');
-  const iPaid=col('paid','payment','status');
-
   return lines.slice(1).map(line=>{
-    const cols=[]; let cur='',inQ=false;
-    for(let ch of line+','){
-      if(ch==='"'){inQ=!inQ;}
-      else if(ch===','&&!inQ){cols.push(cur.trim());cur='';}
-      else{cur+=ch;}
-    }
-    const g=i=>i>=0?(cols[i]||'').replace(/^"|"$/g,'').trim():'';
-    
-    // Logic: If iLast is -1 (missing), try to treat iFirst as a full "Name" field
-    let fName = g(iFirst);
-    let lName = g(iLast);
-    
-    if (iLast < 0 && fName.includes(' ')) {
-        const parts = fName.split(' ');
-        lName = parts.pop();
-        fName = parts.join(' ');
-    }
-
-    const pr=g(iPaid).toLowerCase();
-    return {
-        firstName: fName, 
-        lastName: lName, 
-        gender:g(iGender), dob:g(iDob), address:g(iAddr), 
-        category:g(iCat), whatsapp:g(iWA), contact:g(iContact), 
-        email:g(iEmail), tshirt:g(iTshirt), 
-        paid:(pr==='yes'||pr==='paid'||pr==='true'||pr==='1'||pr==='y')?'Paid':'Unpaid'
-    };
-  }).filter(r=>r.firstName || r.lastName);
+    const cols = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c=>c.replace(/^"|"$/g,'').trim());
+    const fName = cols[iFirst]||'';
+    const lName = (iLast >= 0) ? (cols[iLast]||'') : '';
+    const paidStatus = (cols[iPaid]||'').toLowerCase();
+    const isPaid = (paidStatus === 'yes' || paidStatus === 'paid' || paidStatus === 'true' || paidStatus === '1' || paidStatus === 'y');
+    return { firstName: fName, lastName: lName, category: cols[iCat]||'', paid: isPaid ? 'Paid' : 'Unpaid' };
+  }).filter(r => r.firstName);
 }
 
 function renderList(){
@@ -156,9 +129,9 @@ function renderList(){
   document.getElementById('runner-list').innerHTML = filtered.map(r=>`
     <div class="runner-card">
       <div class="runner-avatar" style="background:#eee">${initials(r.firstName,r.lastName)}</div>
-      <div style="flex:1; margin-left:12px">
+      <div class="runner-info">
         <div class="runner-name">${esc(r.firstName)} ${esc(r.lastName)}</div>
-        <div style="font-size:12px; color:#666">${esc(r.category)}</div>
+        <div class="runner-meta">${esc(r.category)}</div>
       </div>
       <span class="status-badge ${r.paid==='Paid'?'badge-paid':'badge-unpaid'}">${r.paid}</span>
     </div>
@@ -176,15 +149,14 @@ function fetchSheet(){
     allData = parseCSV(text);
     renderList();
     document.getElementById('toast').style.display = 'block';
-    document.getElementById('toast').textContent = "Updated with " + allData.length + " runners";
+    document.getElementById('toast').textContent = "Updated " + allData.length + " runners";
     setTimeout(()=>document.getElementById('toast').style.display = 'none', 3000);
   });
 }
 
-// Initial Load
 document.getElementById('event-badge').textContent = MARATHON_NAME;
 fetchSheet();
-setInterval(fetchSheet, 5*60*1000); // Auto refresh every 5 mins
+setInterval(fetchSheet, 5*60*1000);
 </script>
 </body>
 </html>
