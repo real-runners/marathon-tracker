@@ -6,112 +6,112 @@
 <title>Race Registration</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  :root { --bg:#fff; --text:#1a1a18; --green:#27500A; --green-bg:#EAF3DE; --red:#501313; --red-bg:#FCEBEB; --border:rgba(0,0,0,0.08); }
-  body { font-family: -apple-system, sans-serif; background: #eeede9; color: var(--text); }
-  #app { max-width: 480px; margin: 0 auto; min-height: 100vh; background: var(--bg); display: flex; flex-direction: column; }
-  .header { padding: 20px; border-bottom: 1px solid var(--border); }
-  .title { font-weight: 700; font-size: 18px; margin-bottom: 10px; }
-  .controls { display: flex; gap: 8px; margin-bottom: 15px; }
-  button { padding: 8px 16px; border-radius: 20px; border: 1px solid var(--border); background: #f5f5f3; cursor: pointer; font-size: 13px; }
-  button.active { background: #e0e0e0; font-weight: 600; }
-  .stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; padding: 0 20px 20px; }
-  .stat { background: #f5f5f3; padding: 10px; text-align: center; border-radius: 8px; }
-  .stat-val { font-size: 18px; font-weight: 700; }
-  .runner { display: flex; align-items: center; padding: 15px 20px; border-bottom: 1px solid var(--border); }
-  .info { flex: 1; }
-  .name { font-weight: 600; }
-  .km { font-size: 13px; color: #666; }
-  .status { padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
-  .paid { background: var(--green-bg); color: var(--green); }
-  .unpaid { background: var(--red-bg); color: var(--red); }
+  :root { --bg-primary: #ffffff; --bg-secondary: #f5f5f3; --text-primary: #1a1a18; --text-secondary: #6b6b67; --border-light: rgba(0,0,0,0.08); --green-fill: #EAF3DE; --green-border: #97C459; --green-text: #27500A; --red-fill: #FCEBEB; --red-border: #F09595; --red-text: #501313; --blue-strong: #185FA5; }
+  body { font-family: -apple-system, sans-serif; background: #eeede9; color: var(--text-primary); }
+  #app { max-width: 480px; margin: 0 auto; min-height: 100vh; background: var(--bg-primary); display: flex; flex-direction: column; }
+  .top-bar { padding: 16px; border-bottom: 0.5px solid var(--border-light); position: sticky; top: 0; background: var(--bg-primary); z-index: 10; }
+  .app-title { font-size: 16px; font-weight: 600; margin-bottom: 12px; }
+  .filter-row { display: flex; gap: 6px; margin-bottom: 12px; }
+  .filter-btn { font-size: 13px; padding: 6px 14px; border-radius: 999px; border: 0.5px solid var(--border-light); background: transparent; cursor: pointer; }
+  .filter-btn.active { background: var(--bg-secondary); border-color: #ccc; font-weight: 500; }
+  .search-bar { padding: 0 16px 12px; }
+  .search-bar input { width: 100%; padding: 10px; border-radius: 8px; border: 0.5px solid var(--border-light); background: var(--bg-secondary); }
+  .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 0 16px 16px; border-bottom: 0.5px solid var(--border-light); }
+  .stat-card { background: var(--bg-secondary); padding: 10px; text-align: center; border-radius: 8px; }
+  .stat-val { font-size: 18px; font-weight: 600; }
+  .runner-card { display: flex; align-items: center; padding: 12px 16px; border-bottom: 0.5px solid var(--border-light); gap: 12px; }
+  .runner-avatar { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; flex-shrink: 0; }
+  .runner-info { flex: 1; min-width: 0; }
+  .runner-name { font-size: 14px; font-weight: 500; }
+  .runner-meta { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+  .status-badge { font-size: 11px; font-weight: 500; padding: 4px 10px; border-radius: 999px; }
+  .badge-paid { background: var(--green-fill); color: var(--green-text); border: 0.5px solid var(--green-border); }
+  .badge-unpaid { background: var(--red-fill); color: var(--red-text); border: 0.5px solid var(--red-border); }
 </style>
 </head>
 <body>
 <div id="app">
-  <div class="header">
-    <div class="title" id="event-name">Loading...</div>
-    <div class="controls">
-      <button class="active" id="f-all" onclick="setFilter('all')">All</button>
-      <button id="f-paid" onclick="setFilter('paid')">Paid</button>
-      <button id="f-unpaid" onclick="setFilter('unpaid')">Unpaid</button>
+  <div class="top-bar">
+    <div class="app-title" id="event-title">Registration</div>
+    <div class="filter-row">
+      <button class="filter-btn active" id="f-all" onclick="setFilter('all')">All</button>
+      <button class="filter-btn" id="f-paid" onclick="setFilter('paid')">Paid</button>
+      <button class="filter-btn" id="f-unpaid" onclick="setFilter('unpaid')">Unpaid</button>
     </div>
-    <input type="text" id="search" placeholder="Search name..." style="width:100%; padding:8px; border-radius:8px; border:1px solid #ddd;" oninput="renderList()">
+    <div class="search-bar">
+      <input type="search" id="search-input" placeholder="Search by name..." oninput="renderList()" />
+    </div>
   </div>
-  <div class="stats">
-    <div class="stat">Total<br><span class="stat-val" id="total">0</span></div>
-    <div class="stat">Paid<br><span class="stat-val" id="paid">0</span></div>
-    <div class="stat">Unpaid<br><span class="stat-val" id="unpaid">0</span></div>
+  <div class="stats-row">
+    <div class="stat-card">Total<br><span class="stat-val" id="stat-total">0</span></div>
+    <div class="stat-card">Paid<br><span class="stat-val" id="stat-paid" style="color:var(--green-text)">0</span></div>
+    <div class="stat-card">Unpaid<br><span class="stat-val" id="stat-unpaid" style="color:var(--red-text)">0</span></div>
   </div>
-  <div id="list"></div>
+  <div id="runner-list"></div>
 </div>
 
 <script>
-// --- CONFIGURATION ---
-const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSTD04IlJf10BBEbhettYo_z6Rqqcqm6IFg4UL8NUDeRMoJSxfMnOIfk31j9Wv4KwIY3XZh2H39K49A/pub?gid=1547197644&single=true&output=csv";
-const EVENT_NAME = "Keeranalloor Marathon 2026";
-// ---------------------
+// REPLACE WITH YOUR URL
+const CSV_URL = "YOUR_GOOGLE_SHEET_CSV_URL_HERE";
 
+const COLORS = [{bg:'#E6F1FB',color:'#0C447C'},{bg:'#EAF3DE',color:'#27500A'},{bg:'#FAECE7',color:'#712B13'}];
 let allData = [];
 let currentFilter = 'all';
 
-document.getElementById('event-name').textContent = EVENT_NAME;
+function avatarColor(n){ let h=0; for(let c of n) h=(h*31+c.charCodeAt(0))&0xffff; return COLORS[h%COLORS.length]; }
 
 function setFilter(f){
   currentFilter=f;
-  document.querySelectorAll('.controls button').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('f-'+f).classList.add('active');
   renderList();
 }
 
 function renderList(){
-  const q = document.getElementById('search').value.toLowerCase();
-  const filtered = allData.filter(r => {
+  const search = document.getElementById('search-input').value.toLowerCase();
+  const filtered = allData.filter(r=>{
     const name = (r.firstName + ' ' + r.lastName).toLowerCase();
-    const matchType = (currentFilter === 'all' || r.paid.toLowerCase() === currentFilter);
-    return matchType && name.includes(q);
+    return (currentFilter==='all' || r.paid.toLowerCase()===currentFilter) && (!search || name.includes(search));
   });
   
-  document.getElementById('total').textContent = allData.length;
-  document.getElementById('paid').textContent = allData.filter(r=>r.paid==='Paid').length;
-  document.getElementById('unpaid').textContent = allData.filter(r=>r.paid==='Unpaid').length;
+  document.getElementById('stat-total').textContent = allData.length;
+  document.getElementById('stat-paid').textContent = allData.filter(r=>r.paid==='Paid').length;
+  document.getElementById('stat-unpaid').textContent = allData.filter(r=>r.paid!=='Paid').length;
   
-  document.getElementById('list').innerHTML = filtered.map(r => `
-    <div class="runner">
-      <div class="info">
-        <div class="name">${r.firstName} ${r.lastName}</div>
-        <div class="km">${r.category}</div>
-      </div>
-      <div class="status ${r.paid==='Paid'?'paid':'unpaid'}">${r.paid}</div>
-    </div>
-  `).join('');
+  document.getElementById('runner-list').innerHTML = filtered.map(r=>{
+    const full = (r.firstName + ' ' + r.lastName).trim();
+    const col = avatarColor(full);
+    const badge = r.paid==='Paid' ? '<span class="status-badge badge-paid">Paid</span>' : '<span class="status-badge badge-unpaid">Unpaid</span>';
+    return `<div class="runner-card">
+      <div class="runner-avatar" style="background:${col.bg};color:${col.color}">${((r.firstName||'')[0]||'').toUpperCase()}</div>
+      <div class="runner-info">
+        <div class="runner-name">${full}</div>
+        <div class="runner-meta">${r.category}</div>
+      </div>${badge}</div>`;
+  }).join('');
 }
 
 function parseCSV(text){
-  const lines = text.split('\n').filter(l=>l.trim());
-  if(lines.length < 2) return [];
+  // FIX: Filter out blank lines completely
+  const lines = text.trim().split(/\r?\n/).filter(line => line.trim() !== "");
   const headers = lines[0].toLowerCase();
-  // Finding indices
-  const iFirst = headers.split(',').findIndex(h=>h.includes('first'));
-  const iLast = headers.split(',').findIndex(h=>h.includes('last'));
-  const iCat = headers.split(',').findIndex(h=>h.includes('cat')||h.includes('race'));
-  const iPaid = headers.split(',').findIndex(h=>h.includes('paid')||h.includes('status'));
+  const col = (...kw) => headers.split(',').findIndex(h=>kw.some(k=>h.includes(k)));
+  const iFirst=col('first'); const iLast=col('last'); const iCat=col('cat','race'); const iPaid=col('paid','status');
   
-  return lines.slice(1).map(line => {
+  return lines.slice(1).map(line=>{
     const c = line.split(',');
     const paidText = (c[iPaid]||'').toLowerCase();
     return { 
-      firstName: c[iFirst]||'', 
-      lastName: c[iLast]||'', 
-      category: c[iCat]||'', 
-      paid: (paidText.includes('yes')||paidText.includes('paid')||paidText.includes('y')||paidText.includes('1'))?'Paid':'Unpaid' 
+        firstName: c[iFirst]||'', lastName: c[iLast]||'', category: c[iCat]||'General', 
+        paid: (paidText.includes('yes')||paidText.includes('paid')||paidText.includes('1'))?'Paid':'Unpaid' 
     };
-  });
+  }).filter(r => r.firstName.trim() !== ""); // Extra safety: ensure name exists
 }
 
 fetch(CSV_URL).then(r=>r.text()).then(text=>{
-   allData = parseCSV(text);
-   renderList();
-}).catch(e=>console.error("Fetch failed"));
+  allData = parseCSV(text);
+  renderList();
+});
 </script>
 </body>
 </html>
