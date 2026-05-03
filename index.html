@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+<title>Marathon Registration Tracker</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg-primary: #ffffff;
+    --bg-secondary: #f5f5f3;
+    --bg-tertiary: #eeede9;
+    --text-primary: #1a1a18;
+    --text-secondary: #6b6b67;
+    --text-hint: #9b9b96;
+    --border-light: rgba(0,0,0,0.08);
+    --border-mid: rgba(0,0,0,0.14);
+    --border-strong: rgba(0,0,0,0.22);
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --green-fill: #EAF3DE;
+    --green-border: #97C459;
+    --green-text: #27500A;
+    --red-fill: #FCEBEB;
+    --red-border: #F09595;
+    --red-text: #501313;
+    --blue-strong: #185FA5;
+    --blue-fill: #E6F1FB;
+    --blue-text: #0C447C;
+    --font: -apple-system, 'Segoe UI', sans-serif;
+    --font-mono: 'SF Mono', 'Fira Mono', monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg-primary: #1c1c1a;
+      --bg-secondary: #252523;
+      --bg-tertiary: #2e2e2b;
+      --text-primary: #f0efea;
+      --text-secondary: #a0a09b;
+      --text-hint: #6a6a66;
+      --border-light: rgba(255,255,255,0.07);
+      --border-mid: rgba(255,255,255,0.12);
+      --border-strong: rgba(255,255,255,0.2);
+      --green-fill: #1a2e0a;
+      --green-border: #3B6D11;
+      --green-text: #C0DD97;
+      --red-fill: #2e0d0d;
+      --red-border: #A32D2D;
+      --red-text: #F7C1C1;
+      --blue-strong: #378ADD;
+      --blue-fill: #042C53;
+      --blue-text: #B5D4F4;
+    }
+  }
+
+  html, body { height: 100%; font-family: var(--font); background: var(--bg-tertiary); color: var(--text-primary); -webkit-font-smoothing: antialiased; }
+  #app { max-width: 480px; margin: 0 auto; min-height: 100vh; background: var(--bg-primary); position: relative; display: flex; flex-direction: column; }
+
+  .top-bar { background: var(--bg-primary); border-bottom: 0.5px solid var(--border-light); padding: 14px 16px 10px; position: sticky; top: 0; z-index: 20; }
+  .top-bar-row1 { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .app-title { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 600; color: var(--text-primary); }
+  .event-badge { font-size: 11px; background: var(--bg-secondary); color: var(--text-secondary); padding: 2px 8px; border-radius: 999px; border: 0.5px solid var(--border-light); font-weight: 400; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .admin-btn { font-size: 12px; padding: 5px 12px; border-radius: var(--radius-md); border: 0.5px solid var(--border-mid); background: transparent; color: var(--text-secondary); cursor: pointer; font-family: var(--font); }
+  .filter-row { display: flex; gap: 6px; }
+  .filter-btn { font-size: 13px; padding: 5px 14px; border-radius: 999px; border: 0.5px solid var(--border-light); background: transparent; color: var(--text-secondary); cursor: pointer; font-family: var(--font); transition: all 0.15s; }
+  .filter-btn.active-all    { background: var(--bg-tertiary); border-color: var(--border-mid); color: var(--text-primary); font-weight: 500; }
+  .filter-btn.active-paid   { background: var(--green-fill); border-color: var(--green-border); color: var(--green-text); font-weight: 500; }
+  .filter-btn.active-unpaid { background: var(--red-fill); border-color: var(--red-border); color: var(--red-text); font-weight: 500; }
+
+  .search-bar { padding: 10px 16px 8px; border-bottom: 0.5px solid var(--border-light); background: var(--bg-primary); }
+  .search-bar input { width: 100%; font-size: 14px; padding: 9px 14px; border-radius: var(--radius-md); border: 0.5px solid var(--border-light); background: var(--bg-secondary); color: var(--text-primary); font-family: var(--font); outline: none; }
+  .search-bar input::placeholder { color: var(--text-hint); }
+
+  .stats-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; padding: 12px 16px; border-bottom: 0.5px solid var(--border-light); }
+  .stat-card { background: var(--bg-secondary); border-radius: var(--radius-md); padding: 10px 8px; text-align: center; }
+  .stat-label { font-size: 10px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; }
+  .stat-value { font-size: 24px; font-weight: 600; color: var(--text-primary); }
+  .stat-value.paid   { color: var(--green-text); }
+  .stat-value.unpaid { color: var(--red-text); }
+
+  .runner-list { flex: 1; padding-bottom: 64px; }
+  .runner-card { display: flex; align-items: center; padding: 12px 16px; border-bottom: 0.5px solid var(--border-light); gap: 12px; background: var(--bg-primary); cursor: pointer; transition: background 0.1s; }
+  .runner-card:active { background: var(--bg-secondary); }
+  .runner-avatar { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; flex-shrink: 0; }
+  .runner-info { flex: 1; min-width: 0; }
+  .runner-name { font-size: 14px; font-weight: 500; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .runner-meta { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+  .status-badge { font-size: 11px; font-weight: 500; padding: 4px 10px; border-radius: 999px; flex-shrink: 0; }
+  .badge-paid   { background: var(--green-fill); color: var(--green-text); border: 0.5px solid var(--green-border); }
+  .badge-unpaid { background: var(--red-fill);   color: var(--red-text);   border: 0.5px solid var(--red-border); }
+
+  .refresh-bar { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; background: var(--bg-primary); border-top: 0.5px solid var(--border-light); padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; font-size: 12px; color: var(--text-secondary); z-index: 20; }
+  .refresh-dot { width: 6px; height: 6px; border-radius: 50%; background: #639922; display: inline-block; margin-right: 6px; animation: pulse 2.5s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.25} }
+
+  .empty-state { padding: 60px 16px; text-align: center; color: var(--text-secondary); font-size: 14px; }
+  .empty-state p { margin-bottom: 6px; }
+  .empty-state small { font-size: 12px; color: var(--text-hint); }
+
+  /* DETAIL DRAWER */
+  .drawer-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 50; align-items: flex-end; justify-content: center; }
+  .drawer-overlay.open { display: flex; }
+  .drawer { background: var(--bg-primary); border-radius: 20px 20px 0 0; padding: 16px 16px 40px; width: 100%; max-width: 480px; animation: slideUp 0.22s ease; }
+  @keyframes slideUp { from{transform:translateY(60px);opacity:0} to{transform:translateY(0);opacity:1} }
+  .drawer-handle { width: 36px; height: 4px; background: var(--border-mid); border-radius: 2px; margin: 0 auto 16px; }
+  .drawer-header { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+  .drawer-avatar { width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 600; flex-shrink: 0; }
+  .drawer-name { font-size: 17px; font-weight: 600; color: var(--text-primary); }
+  .drawer-cat  { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
+  .drawer-row  { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 0.5px solid var(--border-light); font-size: 13px; }
+  .drawer-row:last-child { border-bottom: none; }
+  .drawer-key  { color: var(--text-secondary); }
+  .drawer-val  { color: var(--text-primary); font-weight: 500; text-align: right; max-width: 60%; word-break: break-word; }
+  .drawer-close { width: 100%; margin-top: 18px; padding: 11px; font-size: 14px; background: transparent; color: var(--text-secondary); border: 0.5px solid var(--border-light); border-radius: var(--radius-md); cursor: pointer; font-family: var(--font); }
+
+  /* ADMIN */
+  .admin-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 100; align-items: flex-end; justify-content: center; }
+  .admin-overlay.open { display: flex; }
+  .admin-sheet { background: var(--bg-primary); border-radius: 20px 20px 0 0; padding: 16px 16px 40px; width: 100%; max-width: 480px; animation: slideUp 0.25s ease; }
+  .admin-handle { width: 36px; height: 4px; background: var(--border-mid); border-radius: 2px; margin: 0 auto 18px; }
+  .admin-title { font-size: 16px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
+  .admin-sub { font-size: 13px; color: var(--text-secondary); margin-bottom: 16px; line-height: 1.5; }
+  .admin-info { background: var(--blue-fill); border-radius: var(--radius-md); padding: 10px 12px; font-size: 12px; color: var(--blue-text); margin-bottom: 16px; line-height: 1.7; }
+  .admin-label { font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; font-weight: 500; }
+  .admin-input { width: 100%; font-size: 13px; padding: 10px 12px; border-radius: var(--radius-md); border: 0.5px solid var(--border-mid); background: var(--bg-secondary); color: var(--text-primary); margin-bottom: 14px; font-family: var(--font-mono); outline: none; }
+  .admin-input.plain { font-family: var(--font); }
+  .admin-save { width: 100%; padding: 12px; font-size: 14px; font-weight: 600; background: var(--blue-strong); color: #fff; border: none; border-radius: var(--radius-md); cursor: pointer; font-family: var(--font); margin-bottom: 10px; }
+  .admin-cancel { width: 100%; padding: 11px; font-size: 14px; background: transparent; color: var(--text-secondary); border: 0.5px solid var(--border-light); border-radius: var(--radius-md); cursor: pointer; font-family: var(--font); }
+
+  .toast { position: fixed; bottom: 70px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--text-primary); color: var(--bg-primary); font-size: 13px; padding: 8px 18px; border-radius: 999px; opacity: 0; transition: all 0.3s; z-index: 200; white-space: nowrap; }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div class="top-bar">
+    <div class="top-bar-row1">
+      <div class="app-title">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="8" stroke="#185FA5" stroke-width="1.5"/><path d="M5.5 9l2.5 2.5 4.5-4.5" stroke="#185FA5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Race Registration
+        <span class="event-badge" id="event-badge">My Marathon</span>
+      </div>
+      <button class="admin-btn" onclick="openAdmin()">⚙ Admin</button>
+    </div>
+    <div class="filter-row">
+      <button class="filter-btn active-all" id="f-all"    onclick="setFilter('all')">All</button>
+      <button class="filter-btn"            id="f-paid"   onclick="setFilter('paid')">Paid</button>
+      <button class="filter-btn"            id="f-unpaid" onclick="setFilter('unpaid')">Unpaid</button>
+    </div>
+  </div>
+
+  <div class="search-bar">
+    <input type="search" id="search-input" placeholder="Search by name..." oninput="renderList()" autocomplete="off" />
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-label">Total</div><div class="stat-value" id="stat-total">0</div></div>
+    <div class="stat-card"><div class="stat-label">Paid</div><div class="stat-value paid" id="stat-paid">0</div></div>
+    <div class="stat-card"><div class="stat-label">Unpaid</div><div class="stat-value unpaid" id="stat-unpaid">0</div></div>
+  </div>
+
+  <div class="runner-list" id="runner-list"></div>
+
+  <div class="refresh-bar">
+    <span><span class="refresh-dot"></span>Live · refreshes every 5 min</span>
+    <span id="last-updated">Sample data</span>
+  </div>
+</div>
+
+<!-- DETAIL DRAWER -->
+<div class="drawer-overlay" id="drawer-overlay" onclick="handleDrawerOverlay(event)">
+  <div class="drawer">
+    <div class="drawer-handle"></div>
+    <div class="drawer-header">
+      <div class="drawer-avatar" id="d-avatar"></div>
+      <div><div class="drawer-name" id="d-name"></div><div class="drawer-cat" id="d-cat"></div></div>
+    </div>
+    <div id="d-rows"></div>
+    <button class="drawer-close" onclick="closeDrawer()">Close</button>
+  </div>
+</div>
+
+<!-- ADMIN PANEL -->
+<div class="admin-overlay" id="admin-overlay" onclick="handleAdminOverlay(event)">
+  <div class="admin-sheet">
+    <div class="admin-handle"></div>
+    <div class="admin-title">Admin config</div>
+    <div class="admin-sub">Connect your Google Sheet to load live runner data.</div>
+    <div class="admin-info">
+      <strong>How to get your CSV URL:</strong><br>
+      Google Sheets → File → Share → Publish to web → select sheet → choose CSV → Publish → copy the link.
+    </div>
+    <div class="admin-label">Google Sheets CSV URL</div>
+    <input class="admin-input" id="sheet-url" placeholder="https://docs.google.com/spreadsheets/d/.../pub?output=csv" />
+    <div class="admin-label">Event name</div>
+    <input class="admin-input plain" id="event-name" placeholder="e.g. Trivandrum Marathon 2026" />
+    <button class="admin-save" onclick="saveConfig()">Save and load data</button>
+    <button class="admin-cancel" onclick="closeAdmin()">Cancel</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SAMPLE = [
+  {firstName:'Arun',    lastName:'Menon',    gender:'Male',   dob:'1990-03-12', address:'Thiruvananthapuram', category:'Full Marathon', whatsapp:'9400001111', contact:'9400001111', email:'arun@email.com',  tshirt:'L',  paid:'Paid'},
+  {firstName:'Divya',   lastName:'Krishnan', gender:'Female', dob:'1995-07-22', address:'Kollam',             category:'Half Marathon', whatsapp:'9400002222', contact:'9400002222', email:'divya@email.com', tshirt:'M',  paid:'Paid'},
+  {firstName:'Rahul',   lastName:'Nair',     gender:'Male',   dob:'1988-11-05', address:'Kochi',              category:'10K Fun Run',   whatsapp:'9400003333', contact:'9400003333', email:'rahul@email.com', tshirt:'XL', paid:'Unpaid'},
+  {firstName:'Priya',   lastName:'Suresh',   gender:'Female', dob:'1993-01-18', address:'Thrissur',           category:'Full Marathon', whatsapp:'9400004444', contact:'9400004444', email:'priya@email.com', tshirt:'S',  paid:'Paid'},
+  {firstName:'Santhosh',lastName:'Kumar',    gender:'Male',   dob:'1985-09-30', address:'Kozhikode',          category:'Half Marathon', whatsapp:'9400005555', contact:'9400005555', email:'sk@email.com',    tshirt:'L',  paid:'Unpaid'},
+  {firstName:'Lakshmi', lastName:'Pillai',   gender:'Female', dob:'1997-04-14', address:'Palakkad',           category:'10K Fun Run',   whatsapp:'9400006666', contact:'9400006666', email:'lp@email.com',    tshirt:'M',  paid:'Paid'},
+  {firstName:'Vishnu',  lastName:'Raj',      gender:'Male',   dob:'1992-12-01', address:'Malappuram',         category:'Full Marathon', whatsapp:'9400007777', contact:'9400007777', email:'vr@email.com',    tshirt:'M',  paid:'Unpaid'},
+  {firstName:'Anjali',  lastName:'Thomas',   gender:'Female', dob:'1996-06-25', address:'Kottayam',           category:'Half Marathon', whatsapp:'9400008888', contact:'9400008888', email:'at@email.com',    tshirt:'S',  paid:'Paid'},
+];
+
+const COLORS = [
+  {bg:'#E6F1FB',color:'#0C447C'},{bg:'#EAF3DE',color:'#27500A'},
+  {bg:'#FAECE7',color:'#712B13'},{bg:'#EEEDFE',color:'#3C3489'},
+  {bg:'#FAEEDA',color:'#633806'},{bg:'#FBEAF0',color:'#72243E'},
+  {bg:'#E1F5EE',color:'#085041'},
+];
+
+function avatarColor(n){ let h=0; for(let c of n) h=(h*31+c.charCodeAt(0))&0xffff; return COLORS[h%COLORS.length]; }
+function initials(f,l){ return ((f||'')[0]||'').toUpperCase()+((l||'')[0]||'').toUpperCase(); }
+function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+let allData=[...SAMPLE], currentFilter='all';
+
+function setFilter(f){
+  currentFilter=f;
+  ['all','paid','unpaid'].forEach(k=>{ document.getElementById('f-'+k).className='filter-btn'+(k===f?' active-'+k:''); });
+  renderList();
+}
+
+function renderList(){
+  const search=(document.getElementById('search-input').value||'').toLowerCase();
+  const filtered=allData.filter(r=>{
+    const name=(r.firstName+' '+r.lastName).toLowerCase();
+    return (currentFilter==='all'||r.paid.toLowerCase()===currentFilter) && (!search||name.includes(search));
+  });
+  document.getElementById('stat-total').textContent=allData.length;
+  document.getElementById('stat-paid').textContent=allData.filter(r=>r.paid==='Paid').length;
+  document.getElementById('stat-unpaid').textContent=allData.filter(r=>r.paid!=='Paid').length;
+  const list=document.getElementById('runner-list');
+  if(!filtered.length){ list.innerHTML=`<div class="empty-state"><p>No runners found</p><small>${search?'Try a different name':'No entries match this filter'}</small></div>`; return; }
+  list.innerHTML=filtered.map(r=>{
+    const full=(r.firstName+' '+r.lastName).trim();
+    const col=avatarColor(full);
+    const badge=r.paid==='Paid'?'<span class="status-badge badge-paid">Paid</span>':'<span class="status-badge badge-unpaid">Unpaid</span>';
+    return `<div class="runner-card" onclick="openDrawer(${allData.indexOf(r)})">
+      <div class="runner-avatar" style="background:${col.bg};color:${col.color}">${initials(r.firstName,r.lastName)}</div>
+      <div class="runner-info">
+        <div class="runner-name">${esc(full)}</div>
+        <div class="runner-meta">${esc(r.category)}${r.gender?' · '+esc(r.gender):''}${r.tshirt?' · '+esc(r.tshirt):''}</div>
+      </div>${badge}</div>`;
+  }).join('');
+}
+
+function openDrawer(idx){
+  const r=allData[idx]; if(!r) return;
+  const full=(r.firstName+' '+r.lastName).trim();
+  const col=avatarColor(full);
+  document.getElementById('d-avatar').style.cssText=`background:${col.bg};color:${col.color}`;
+  document.getElementById('d-avatar').textContent=initials(r.firstName,r.lastName);
+  document.getElementById('d-name').textContent=full;
+  document.getElementById('d-cat').textContent=r.category;
+  const fields=[['Gender',r.gender],['Date of birth',r.dob],['Race category',r.category],['T-shirt size',r.tshirt],['WhatsApp',r.whatsapp],['Contact',r.contact],['Email',r.email],['Address',r.address],['Payment',r.paid]];
+  document.getElementById('d-rows').innerHTML=fields.filter(([,v])=>v).map(([k,v])=>{
+    const vs=k==='Payment'?`style="color:${v==='Paid'?'var(--green-text)':'var(--red-text)'};font-weight:600"`:'';
+    return `<div class="drawer-row"><span class="drawer-key">${esc(k)}</span><span class="drawer-val" ${vs}>${esc(v)}</span></div>`;
+  }).join('');
+  document.getElementById('drawer-overlay').classList.add('open');
+}
+function closeDrawer(){ document.getElementById('drawer-overlay').classList.remove('open'); }
+function handleDrawerOverlay(e){ if(e.target===document.getElementById('drawer-overlay')) closeDrawer(); }
+
+// CSV parser — mapped to your exact columns:
+// Timestamp | First Name | Last Name | Gender | Date of birth | Address |
+// Race Category | WhatsApp Number | Contact Number | Email Address | T Shirts Size | Paid
+function parseCSV(text){
+  const lines=text.trim().split(/\r?\n/); if(lines.length<2) return null;
+  const headers=lines[0].split(',').map(h=>h.trim().replace(/^"|"$/g,'').toLowerCase());
+  const col=(...kw)=>headers.findIndex(h=>kw.some(k=>h.includes(k)));
+  const iFirst=col('first name','first'); const iLast=col('last name','last');
+  const iGender=col('gender'); const iDob=col('birth','dob');
+  const iAddr=col('address'); const iCat=col('race','category','event');
+  const iWA=col('whatsapp'); const iContact=col('contact number','contact');
+  const iEmail=col('email'); const iTshirt=col('shirt','size');
+  const iPaid=col('paid','payment','status');
+  if(iFirst<0||iPaid<0) return null;
+  return lines.slice(1).map(line=>{
+    const cols=[]; let cur='',inQ=false;
+    for(let ch of line+','){
+      if(ch==='"'){inQ=!inQ;}
+      else if(ch===','&&!inQ){cols.push(cur.trim());cur='';}
+      else{cur+=ch;}
+    }
+    const g=i=>i>=0?(cols[i]||'').replace(/^"|"$/g,'').trim():'';
+    const pr=g(iPaid).toLowerCase();
+    return {firstName:g(iFirst),lastName:g(iLast),gender:g(iGender),dob:g(iDob),address:g(iAddr),category:g(iCat),whatsapp:g(iWA),contact:g(iContact),email:g(iEmail),tshirt:g(iTshirt),paid:(pr==='yes'||pr==='paid'||pr==='true'||pr==='1')?'Paid':'Unpaid'};
+  }).filter(r=>r.firstName);
+}
+
+function fetchSheet(url){
+  if(!url) return;
+  fetch(url,{cache:'no-cache'}).then(r=>{if(!r.ok)throw new Error();return r.text();})
+    .then(text=>{
+      const p=parseCSV(text);
+      if(p&&p.length){allData=p;document.getElementById('last-updated').textContent='Updated '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});renderList();showToast('Loaded '+p.length+' runners');}
+      else showToast('Could not read sheet — check column headers');
+    }).catch(()=>showToast('Could not reach sheet — check URL'));
+}
+
+function openAdmin(){
+  try{document.getElementById('sheet-url').value=localStorage.getItem('mrt-url')||'';document.getElementById('event-name').value=localStorage.getItem('mrt-name')||'';}catch(e){}
+  document.getElementById('admin-overlay').classList.add('open');
+}
+function closeAdmin(){ document.getElementById('admin-overlay').classList.remove('open'); }
+function handleAdminOverlay(e){ if(e.target===document.getElementById('admin-overlay')) closeAdmin(); }
+function saveConfig(){
+  const url=document.getElementById('sheet-url').value.trim();
+  const name=document.getElementById('event-name').value.trim();
+  try{if(url)localStorage.setItem('mrt-url',url);if(name)localStorage.setItem('mrt-name',name);}catch(e){}
+  if(name) document.getElementById('event-badge').textContent=name;
+  closeAdmin();
+  if(url){showToast('Loading from sheet…');fetchSheet(url);}else showToast('No URL — showing sample data');
+}
+
+function showToast(msg){ const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000); }
+
+(function(){
+  try{const u=localStorage.getItem('mrt-url'),n=localStorage.getItem('mrt-name');if(n)document.getElementById('event-badge').textContent=n;if(u)fetchSheet(u);}catch(e){}
+  renderList();
+  setInterval(()=>{try{const u=localStorage.getItem('mrt-url');if(u)fetchSheet(u);}catch(e){};},5*60*1000);
+})();
+</script>
+</body>
+</html>
