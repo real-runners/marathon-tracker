@@ -2,11 +2,12 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Marathon Registration</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+<title>Race Registration</title>
 <style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root { --bg:#fff; --text:#1a1a18; --green:#27500A; --green-bg:#EAF3DE; --red:#501313; --red-bg:#FCEBEB; --border:rgba(0,0,0,0.08); }
-  body { font-family: -apple-system, sans-serif; background: #eeede9; color: var(--text); margin: 0; }
+  body { font-family: -apple-system, sans-serif; background: #eeede9; color: var(--text); }
   #app { max-width: 480px; margin: 0 auto; min-height: 100vh; background: var(--bg); display: flex; flex-direction: column; }
   .header { padding: 20px; border-bottom: 1px solid var(--border); }
   .title { font-weight: 700; font-size: 18px; margin-bottom: 10px; }
@@ -23,13 +24,12 @@
   .status { padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
   .paid { background: var(--green-bg); color: var(--green); }
   .unpaid { background: var(--red-bg); color: var(--red); }
-  .admin-bar { padding: 10px 20px; font-size: 11px; color: #888; display: flex; justify-content: space-between; align-items: center; }
 </style>
 </head>
 <body>
 <div id="app">
   <div class="header">
-    <div class="title" id="event-name">Marathon Registration</div>
+    <div class="title" id="event-name">Loading...</div>
     <div class="controls">
       <button class="active" id="f-all" onclick="setFilter('all')">All</button>
       <button id="f-paid" onclick="setFilter('paid')">Paid</button>
@@ -43,20 +43,18 @@
     <div class="stat">Unpaid<br><span class="stat-val" id="unpaid">0</span></div>
   </div>
   <div id="list"></div>
-  <div class="admin-bar">
-    <span id="update-time">Ready</span>
-    <button onclick="configAdmin()">⚙ Settings</button>
-  </div>
 </div>
 
 <script>
-const SAMPLE = [
-  {firstName:'Arun',lastName:'Menon',category:'10 KM',paid:'Paid'},
-  {firstName:'Divya',lastName:'Krishnan',category:'21 KM',paid:'Paid'},
-  {firstName:'Rahul',lastName:'Nair',category:'5 KM',paid:'Unpaid'}
-];
-let allData = [...SAMPLE];
+// --- CONFIGURATION ---
+const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSTD04IlJf10BBEbhettYo_z6Rqqcqm6IFg4UL8NUDeRMoJSxfMnOIfk31j9Wv4KwIY3XZh2H39K49A/pub?gid=1547197644&single=true&output=csv";
+const EVENT_NAME = "Keeranalloor Marathon 2026";
+// ---------------------
+
+let allData = [];
 let currentFilter = 'all';
+
+document.getElementById('event-name').textContent = EVENT_NAME;
 
 function setFilter(f){
   currentFilter=f;
@@ -90,35 +88,30 @@ function renderList(){
 
 function parseCSV(text){
   const lines = text.split('\n').filter(l=>l.trim());
+  if(lines.length < 2) return [];
   const headers = lines[0].toLowerCase();
-  const iFirst = headers.indexOf('first');
-  const iLast = headers.indexOf('last');
-  const iCat = headers.indexOf('cat');
-  const iPaid = headers.indexOf('paid');
+  // Finding indices
+  const iFirst = headers.split(',').findIndex(h=>h.includes('first'));
+  const iLast = headers.split(',').findIndex(h=>h.includes('last'));
+  const iCat = headers.split(',').findIndex(h=>h.includes('cat')||h.includes('race'));
+  const iPaid = headers.split(',').findIndex(h=>h.includes('paid')||h.includes('status'));
   
   return lines.slice(1).map(line => {
     const c = line.split(',');
-    return { firstName: c[1]||'Unknown', lastName: c[2]||'', category: c[6]||'General', paid: (c[11]||'').toLowerCase().includes('y')?'Paid':'Unpaid' };
+    const paidText = (c[iPaid]||'').toLowerCase();
+    return { 
+      firstName: c[iFirst]||'', 
+      lastName: c[iLast]||'', 
+      category: c[iCat]||'', 
+      paid: (paidText.includes('yes')||paidText.includes('paid')||paidText.includes('y')||paidText.includes('1'))?'Paid':'Unpaid' 
+    };
   });
 }
 
-function configAdmin(){
-  const url = prompt("Enter Google Sheet CSV URL:", localStorage.getItem('mrt-url')||'');
-  if(url){
-    localStorage.setItem('mrt-url', url);
-    fetch(url).then(r=>r.text()).then(text=>{
-       const data = parseCSV(text);
-       if(data && data.length > 0){ allData = data; renderList(); document.getElementById('update-time').textContent='Live Data'; }
-       else { alert('Could not parse sheet data'); }
-    });
-  } else {
-    localStorage.removeItem('mrt-url');
-    allData = [...SAMPLE];
-    renderList();
-  }
-}
-
-renderList();
+fetch(CSV_URL).then(r=>r.text()).then(text=>{
+   allData = parseCSV(text);
+   renderList();
+}).catch(e=>console.error("Fetch failed"));
 </script>
 </body>
 </html>
