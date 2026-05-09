@@ -4,172 +4,520 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
 <title>Marathon Registration Tracker</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <style>
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  /* ── CONFIG: change these two lines ── */
+  :root {
+    --marathon-name: "Madurai Runners Marathon 2025";
+    --csv-url: "YOUR_GOOGLE_SHEET_CSV_URL_HERE";
+  }
 
-:root {
-  --bg: #0a0a0f;
-  --surface: #13131c;
-  --surface2: #1c1c2a;
-  --border: rgba(255,255,255,0.08);
-  --border2: rgba(255,255,255,0.15);
-  --text: #f0f0f5;
-  --muted: #888899;
-  --accent: #ff5c35;
-  --gold: #f5c842;
-  --paid-bg: rgba(22,163,74,0.15);
-  --paid-text: #4ade80;
-  --paid-border: rgba(74,222,128,0.3);
-  --unpaid-bg: rgba(239,68,68,0.12);
-  --unpaid-text: #f87171;
-  --unpaid-border: rgba(248,113,113,0.3);
-  --radius: 12px;
-  --font: 'Barlow','Segoe UI',sans-serif;
-  --font-d: 'Barlow Condensed','Segoe UI',sans-serif;
-}
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-@import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@600;700;800&display=swap');
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131c;
+    --surface2: #1c1c2a;
+    --border: rgba(255,255,255,0.08);
+    --border2: rgba(255,255,255,0.15);
+    --text: #f0f0f5;
+    --muted: #888899;
+    --accent: #ff5c35;
+    --accent2: #ff8c6b;
+    --gold: #f5c842;
+    --paid-bg: rgba(22, 163, 74, 0.15);
+    --paid-text: #4ade80;
+    --paid-border: rgba(74, 222, 128, 0.3);
+    --unpaid-bg: rgba(239, 68, 68, 0.12);
+    --unpaid-text: #f87171;
+    --unpaid-border: rgba(248, 113, 113, 0.3);
+    --radius: 12px;
+    --font: 'Barlow', 'Segoe UI', sans-serif;
+    --font-display: 'Barlow Condensed', 'Segoe UI', sans-serif;
+  }
 
-body { font-family:var(--font); background:var(--bg); color:var(--text); min-height:100vh; -webkit-font-smoothing:antialiased; }
+  @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@600;700;800&display=swap');
 
-/* HEADER */
-header { background:var(--surface); border-bottom:1px solid var(--border); padding:20px 16px 16px; position:sticky; top:0; z-index:100; }
-.header-top { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:16px; }
-.marathon-title { font-family:var(--font-d); font-size:clamp(18px,5.5vw,24px); font-weight:800; letter-spacing:-0.3px; line-height:1.1; text-transform:uppercase; }
-.marathon-title span { color:var(--accent); }
-.live-badge { display:flex; align-items:center; gap:5px; font-size:11px; font-weight:600; letter-spacing:.8px; text-transform:uppercase; color:var(--muted); white-space:nowrap; padding-top:3px; }
-.live-dot { width:7px; height:7px; border-radius:50%; background:#4ade80; animation:pulse 2s ease-in-out infinite; }
-@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
 
-.stats-row { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:16px; }
-.stat-card { background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:10px 12px; text-align:center; }
-.stat-num { font-family:var(--font-d); font-size:26px; font-weight:800; line-height:1; margin-bottom:3px; }
-.stat-num.total{color:var(--text)} .stat-num.paid{color:var(--paid-text)} .stat-num.unpaid{color:var(--unpaid-text)}
-.stat-label { font-size:11px; font-weight:600; letter-spacing:.6px; text-transform:uppercase; color:var(--muted); }
+  /* ── HEADER ── */
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 20px 16px 16px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(12px);
+  }
 
-.filter-row { display:flex; gap:8px; align-items:center; }
-.search-wrap { flex:1; position:relative; }
-.search-wrap svg { position:absolute; left:10px; top:50%; transform:translateY(-50%); color:var(--muted); pointer-events:none; }
-.search-input { width:100%; background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:9px 10px 9px 34px; font-family:var(--font); font-size:14px; color:var(--text); outline:none; transition:border-color .2s; }
-.search-input::placeholder{color:var(--muted)} .search-input:focus{border-color:var(--accent)}
-.filter-buttons { display:flex; gap:6px; }
-.filter-btn { padding:8px 12px; border-radius:8px; border:1px solid var(--border); background:var(--surface2); color:var(--muted); font-family:var(--font); font-size:12px; font-weight:600; cursor:pointer; transition:all .2s; white-space:nowrap; }
-.filter-btn:hover{border-color:var(--border2);color:var(--text)}
-.filter-btn.active-all{background:var(--accent);border-color:var(--accent);color:#fff}
-.filter-btn.active-paid{background:var(--paid-bg);border-color:var(--paid-border);color:var(--paid-text)}
-.filter-btn.active-unpaid{background:var(--unpaid-bg);border-color:var(--unpaid-border);color:var(--unpaid-text)}
+  .header-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
 
-/* CATEGORY PILLS */
-.category-row { display:flex; gap:6px; overflow-x:auto; padding:12px 16px 0; scrollbar-width:none; }
-.category-row::-webkit-scrollbar{display:none}
-.cat-btn { padding:5px 12px; border-radius:20px; border:1px solid var(--border); background:transparent; color:var(--muted); font-family:var(--font); font-size:12px; font-weight:600; cursor:pointer; transition:all .2s; white-space:nowrap; }
-.cat-btn:hover{border-color:var(--border2);color:var(--text)} .cat-btn.active{background:var(--accent);border-color:var(--accent);color:#fff}
+  .marathon-title {
+    font-family: var(--font-display);
+    font-size: clamp(20px, 6vw, 26px);
+    font-weight: 800;
+    letter-spacing: -0.3px;
+    line-height: 1.1;
+    text-transform: uppercase;
+  }
 
-.results-count { padding:10px 16px 6px; font-size:12px; color:var(--muted); font-weight:500; }
+  .marathon-title span {
+    color: var(--accent);
+  }
 
-/* RUNNER CARDS */
-.runners-list { padding:0 16px 100px; display:flex; flex-direction:column; gap:8px; }
-.runner-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:14px 16px; display:flex; align-items:center; gap:14px; animation:fadeIn .25s ease both; }
-@keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:none} }
-.runner-avatar { width:42px; height:42px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:var(--font-d); font-size:15px; font-weight:800; flex-shrink:0; text-transform:uppercase; }
-.avatar-m{background:rgba(59,130,246,.18);color:#60a5fa} .avatar-f{background:rgba(236,72,153,.18);color:#f472b6} .avatar-x{background:rgba(139,92,246,.18);color:#a78bfa}
-.runner-info { flex:1; min-width:0; }
-.runner-name { font-family:var(--font-d); font-size:17px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:4px; }
-.runner-meta { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
-.race-badge { font-size:11px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; padding:3px 8px; border-radius:5px; background:rgba(245,200,66,.12); color:var(--gold); border:1px solid rgba(245,200,66,.25); }
-.runner-num { font-size:12px; color:var(--muted); font-weight:500; }
-.runner-right { display:flex; flex-direction:column; align-items:flex-end; gap:7px; flex-shrink:0; }
-.fee-badge { padding:5px 11px; border-radius:8px; font-size:12px; font-weight:700; letter-spacing:.4px; text-transform:uppercase; }
-.fee-paid{background:var(--paid-bg);color:var(--paid-text);border:1px solid var(--paid-border)}
-.fee-unpaid{background:var(--unpaid-bg);color:var(--unpaid-text);border:1px solid var(--unpaid-border)}
-.mark-btn { font-family:var(--font); font-size:11px; font-weight:600; padding:4px 9px; border-radius:6px; border:1px solid rgba(74,222,128,.35); background:rgba(22,163,74,.1); color:var(--paid-text); cursor:pointer; transition:all .18s; white-space:nowrap; }
-.mark-btn:hover{background:rgba(22,163,74,.22);border-color:var(--paid-text)} .mark-btn:disabled{opacity:.4;cursor:not-allowed}
+  .live-badge {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--muted);
+    white-space: nowrap;
+    padding-top: 3px;
+  }
 
-/* STATE BOXES */
-.state-box { text-align:center; padding:60px 24px; color:var(--muted); }
-.state-icon { font-size:40px; margin-bottom:12px; opacity:.5; }
-.state-title { font-family:var(--font-d); font-size:18px; font-weight:700; color:var(--text); margin-bottom:6px; }
-.state-sub { font-size:14px; line-height:1.5; }
-.spinner { width:36px; height:36px; border:3px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin .8s linear infinite; margin:0 auto 16px; }
-@keyframes spin { to{transform:rotate(360deg)} }
+  .live-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #4ade80;
+    animation: pulse 2s ease-in-out infinite;
+  }
 
-/* REFRESH BAR */
-.refresh-bar { position:fixed; bottom:0; left:0; right:0; background:var(--surface); border-top:1px solid var(--border); padding:10px 16px; display:flex; align-items:center; justify-content:space-between; font-size:12px; color:var(--muted); z-index:200; }
-.refresh-btn { background:none; border:1px solid var(--border); border-radius:6px; padding:5px 12px; font-family:var(--font); font-size:12px; font-weight:600; color:var(--muted); cursor:pointer; transition:all .2s; }
-.refresh-btn:hover{border-color:var(--accent);color:var(--accent)}
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
 
-/* MODAL */
-.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.7); z-index:500; display:flex; align-items:flex-end; justify-content:center; animation:overlayIn .2s ease; }
-@keyframes overlayIn{from{opacity:0}to{opacity:1}}
-.modal-sheet { background:var(--surface); border:1px solid var(--border2); border-bottom:none; border-radius:20px 20px 0 0; padding:24px 20px 36px; width:100%; max-width:480px; animation:sheetUp .25s cubic-bezier(.34,1.56,.64,1); }
-@keyframes sheetUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
-.modal-handle { width:36px; height:4px; background:var(--border2); border-radius:2px; margin:0 auto 20px; }
-.modal-runner-name { font-family:var(--font-d); font-size:22px; font-weight:800; text-align:center; margin-bottom:4px; }
-.modal-sub { text-align:center; font-size:13px; color:var(--muted); margin-bottom:20px; }
-.modal-label { font-size:12px; font-weight:600; letter-spacing:.5px; text-transform:uppercase; color:var(--muted); margin-bottom:8px; }
-.modal-input { width:100%; background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:12px 14px; font-family:var(--font); font-size:16px; color:var(--text); outline:none; margin-bottom:12px; transition:border-color .2s; letter-spacing:2px; }
-.modal-input:focus{border-color:var(--accent)}
-.modal-error { background:rgba(239,68,68,.1); border:1px solid rgba(248,113,113,.3); border-radius:8px; padding:10px 14px; font-size:13px; color:var(--unpaid-text); margin-bottom:12px; display:none; }
-.modal-error.show{display:block}
-.modal-confirm-btn { width:100%; padding:14px; border-radius:12px; border:none; background:var(--paid-text); color:#0a1a10; font-family:var(--font-d); font-size:17px; font-weight:800; letter-spacing:.5px; cursor:pointer; transition:all .18s; margin-bottom:10px; }
-.modal-confirm-btn:hover{filter:brightness(1.1)} .modal-confirm-btn:disabled{opacity:.5;cursor:not-allowed}
-.modal-cancel-btn { width:100%; padding:12px; border-radius:12px; border:1px solid var(--border); background:transparent; color:var(--muted); font-family:var(--font); font-size:15px; font-weight:600; cursor:pointer; transition:all .18s; }
-.modal-cancel-btn:hover{border-color:var(--border2);color:var(--text)}
+  /* ── STATS ROW ── */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 16px;
+  }
 
-/* TOAST */
-.toast { position:fixed; top:20px; left:50%; transform:translateX(-50%) translateY(-80px); background:var(--surface); border:1px solid var(--border2); border-radius:12px; padding:12px 20px; font-size:14px; font-weight:600; z-index:999; transition:transform .35s cubic-bezier(.34,1.56,.64,1); white-space:nowrap; }
-.toast.show{transform:translateX(-50%) translateY(0)}
-.toast.success{color:var(--paid-text);border-color:var(--paid-border)}
-.toast.error{color:var(--unpaid-text);border-color:var(--unpaid-border)}
+  .stat-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    text-align: center;
+  }
 
-/* BANNERS */
-.config-banner { margin:16px; padding:14px 16px; background:rgba(245,200,66,.08); border:1px solid rgba(245,200,66,.3); border-radius:var(--radius); font-size:13px; color:var(--gold); line-height:1.6; }
-.config-banner strong{display:block;margin-bottom:4px;font-size:14px}
-.config-banner code{background:rgba(245,200,66,.15);padding:1px 5px;border-radius:4px;font-family:monospace;font-size:12px;word-break:break-all}
-.error-card { margin:16px; padding:16px; background:rgba(239,68,68,.08); border:1px solid rgba(239,68,68,.25); border-radius:var(--radius); font-size:13px; color:#f87171; line-height:1.6; }
-.error-card strong{display:block;margin-bottom:6px;font-size:15px}
+  .stat-num {
+    font-family: var(--font-display);
+    font-size: 26px;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 3px;
+  }
 
-@media(min-width:600px){
-  header{padding:24px 24px 18px}
-  .runners-list{padding:0 24px 100px;max-width:720px;margin:0 auto}
-  .category-row{padding:12px 24px 0}
-  .results-count{padding:10px 24px 6px}
-}
+  .stat-num.total { color: var(--text); }
+  .stat-num.paid { color: var(--paid-text); }
+  .stat-num.unpaid { color: var(--unpaid-text); }
+
+  .stat-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  /* ── FILTERS ── */
+  .filter-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .search-wrap {
+    flex: 1;
+    position: relative;
+  }
+
+  .search-wrap svg {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    pointer-events: none;
+  }
+
+  .search-input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 10px 9px 34px;
+    font-family: var(--font);
+    font-size: 14px;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .search-input::placeholder { color: var(--muted); }
+  .search-input:focus { border-color: var(--accent); }
+
+  .filter-buttons {
+    display: flex;
+    gap: 6px;
+  }
+
+  .filter-btn {
+    padding: 8px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--muted);
+    font-family: var(--font);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .filter-btn:hover { border-color: var(--border2); color: var(--text); }
+
+  .filter-btn.active-all {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+  }
+
+  .filter-btn.active-paid {
+    background: var(--paid-bg);
+    border-color: var(--paid-border);
+    color: var(--paid-text);
+  }
+
+  .filter-btn.active-unpaid {
+    background: var(--unpaid-bg);
+    border-color: var(--unpaid-border);
+    color: var(--unpaid-text);
+  }
+
+  /* ── CATEGORY FILTERS ── */
+  .category-row {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding: 12px 16px 0;
+    scrollbar-width: none;
+  }
+
+  .category-row::-webkit-scrollbar { display: none; }
+
+  .cat-btn {
+    padding: 5px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    font-family: var(--font);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    letter-spacing: 0.3px;
+  }
+
+  .cat-btn:hover { border-color: var(--border2); color: var(--text); }
+  .cat-btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+  }
+
+  /* ── RESULTS COUNT ── */
+  .results-count {
+    padding: 10px 16px 6px;
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 500;
+  }
+
+  /* ── RUNNER CARDS ── */
+  .runners-list {
+    padding: 0 16px 100px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .runner-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    animation: fadeIn 0.25s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .runner-avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 800;
+    flex-shrink: 0;
+    text-transform: uppercase;
+  }
+
+  .avatar-m { background: rgba(59, 130, 246, 0.18); color: #60a5fa; }
+  .avatar-f { background: rgba(236, 72, 153, 0.18); color: #f472b6; }
+  .avatar-x { background: rgba(139, 92, 246, 0.18); color: #a78bfa; }
+
+  .runner-info { flex: 1; min-width: 0; }
+
+  .runner-name {
+    font-family: var(--font-display);
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: 0.1px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 4px;
+  }
+
+  .runner-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .race-badge {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 5px;
+    background: rgba(245, 200, 66, 0.12);
+    color: var(--gold);
+    border: 1px solid rgba(245, 200, 66, 0.25);
+  }
+
+  .runner-num {
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 500;
+  }
+
+  .fee-badge {
+    flex-shrink: 0;
+    padding: 5px 11px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+  }
+
+  .fee-paid {
+    background: var(--paid-bg);
+    color: var(--paid-text);
+    border: 1px solid var(--paid-border);
+  }
+
+  .fee-unpaid {
+    background: var(--unpaid-bg);
+    color: var(--unpaid-text);
+    border: 1px solid var(--unpaid-border);
+  }
+
+  /* ── EMPTY / LOADING / ERROR ── */
+  .state-box {
+    text-align: center;
+    padding: 60px 24px;
+    color: var(--muted);
+  }
+
+  .state-icon {
+    font-size: 40px;
+    margin-bottom: 12px;
+    opacity: 0.5;
+  }
+
+  .state-title {
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+
+  .state-sub { font-size: 14px; line-height: 1.5; }
+
+  /* ── SPINNER ── */
+  .spinner {
+    width: 36px;
+    height: 36px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 16px;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── CONFIG BANNER ── */
+  .config-banner {
+    margin: 16px;
+    padding: 14px 16px;
+    background: rgba(245, 200, 66, 0.08);
+    border: 1px solid rgba(245, 200, 66, 0.3);
+    border-radius: var(--radius);
+    font-size: 13px;
+    color: var(--gold);
+    line-height: 1.5;
+  }
+
+  .config-banner strong { display: block; margin-bottom: 4px; font-size: 14px; }
+  .config-banner code {
+    background: rgba(245,200,66,0.15);
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 12px;
+    word-break: break-all;
+  }
+
+  /* ── REFRESH INFO ── */
+  .refresh-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .refresh-btn {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 5px 12px;
+    font-family: var(--font);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .refresh-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  .countdown { font-weight: 600; color: var(--accent2); }
+
+  /* ── ERROR STATE ── */
+  .error-card {
+    margin: 16px;
+    padding: 16px;
+    background: rgba(239, 68, 68, 0.08);
+    border: 1px solid rgba(239, 68, 68, 0.25);
+    border-radius: var(--radius);
+    font-size: 13px;
+    color: #f87171;
+    line-height: 1.6;
+  }
+
+  .error-card strong { display: block; margin-bottom: 6px; font-size: 15px; }
+
+  @media (min-width: 600px) {
+    header { padding: 24px 24px 18px; }
+    .runners-list { padding: 0 24px 100px; max-width: 720px; margin: 0 auto; }
+    .category-row { padding: 12px 24px 0; }
+    .results-count { padding: 10px 24px 6px; }
+  }
 </style>
 </head>
 <body>
 
-<div class="toast" id="toast"></div>
-
 <header>
   <div class="header-top">
-    <div class="marathon-title" id="title-el">Loading<span>…</span></div>
+    <div class="marathon-title" id="marathon-title-el">Loading<span>...</span></div>
     <div class="live-badge"><div class="live-dot"></div> Live</div>
   </div>
   <div class="stats-row">
-    <div class="stat-card"><div class="stat-num total" id="s-total">—</div><div class="stat-label">Total</div></div>
-    <div class="stat-card"><div class="stat-num paid"  id="s-paid">—</div><div class="stat-label">Paid</div></div>
-    <div class="stat-card"><div class="stat-num unpaid" id="s-unpaid">—</div><div class="stat-label">Unpaid</div></div>
+    <div class="stat-card">
+      <div class="stat-num total" id="stat-total">—</div>
+      <div class="stat-label">Total</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num paid" id="stat-paid">—</div>
+      <div class="stat-label">Paid</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num unpaid" id="stat-unpaid">—</div>
+      <div class="stat-label">Unpaid</div>
+    </div>
   </div>
   <div class="filter-row">
     <div class="search-wrap">
       <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
         <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
       </svg>
-      <input class="search-input" id="search-input" placeholder="Search by name…" type="search"/>
+      <input class="search-input" id="search-input" placeholder="Search by name…" type="search" />
     </div>
     <div class="filter-buttons">
-      <button class="filter-btn active-all"  data-f="all"    onclick="setFilter('all')">All</button>
-      <button class="filter-btn"             data-f="paid"   onclick="setFilter('paid')">Paid</button>
-      <button class="filter-btn"             data-f="unpaid" onclick="setFilter('unpaid')">Unpaid</button>
+      <button class="filter-btn active-all" data-filter="all" onclick="setFilter('all')">All</button>
+      <button class="filter-btn" data-filter="paid" onclick="setFilter('paid')">Paid</button>
+      <button class="filter-btn" data-filter="unpaid" onclick="setFilter('unpaid')">Unpaid</button>
     </div>
   </div>
 </header>
 
 <div class="category-row" id="cat-row"></div>
+
 <div class="results-count" id="results-count"></div>
-<div class="runners-list" id="list">
-  <div class="state-box"><div class="spinner"></div><div class="state-title">Fetching registrations…</div><div class="state-sub">Loading the latest data.</div></div>
+
+<div class="runners-list" id="runners-list">
+  <div class="state-box">
+    <div class="spinner"></div>
+    <div class="state-title">Fetching registrations…</div>
+    <div class="state-sub">Please wait while we load the latest data.</div>
+  </div>
 </div>
 
 <div class="refresh-bar">
@@ -177,255 +525,252 @@ header { background:var(--surface); border-bottom:1px solid var(--border); paddi
   <button class="refresh-btn" onclick="fetchData()">↻ Refresh</button>
 </div>
 
-<!-- PASSWORD MODAL -->
-<div class="modal-overlay" id="modal" style="display:none" onclick="if(event.target===this)closeModal()">
-  <div class="modal-sheet">
-    <div class="modal-handle"></div>
-    <div class="modal-runner-name" id="m-name">Runner Name</div>
-    <div class="modal-sub" id="m-meta">10KM · Unpaid</div>
-    <div class="modal-label">Admin Password</div>
-    <input class="modal-input" id="m-pw" type="password" placeholder="••••••••"
-      autocomplete="current-password" onkeydown="if(event.key==='Enter')confirmPaid()"/>
-    <div class="modal-error" id="m-err"></div>
-    <button class="modal-confirm-btn" id="m-btn" onclick="confirmPaid()">✓ Mark as Paid</button>
-    <button class="modal-cancel-btn" onclick="closeModal()">Cancel</button>
-  </div>
-</div>
-
 <script>
-// ════════════════════════════════════════════════════
-// CONFIGURATION — fill in both values before deploying
-// ════════════════════════════════════════════════════
-const MARATHON_NAME   = "Keeranalloor Marathon 2K26";
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbykXOo884SS9Yxl8tC6ZOiULFjXL_1RZAQleirzSuOGReqJV19RBA_oAPW0yMyNHdatZg/exec";
-const REFRESH_MS      = 300000; // 5 minutes
-// ════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════
+// ── CONFIGURATION — edit these two values ──
+// ═══════════════════════════════════════════════
+const MARATHON_NAME = "Keeranalloor Marathon 2K26";
 
+// Paste your Google Sheet "Publish to web → CSV" URL below:
+const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSTD04IlJf10BBEbhettYo_z6Rqqcqm6IFg4UL8NUDeRMoJSxfMnOIfk31j9Wv4KwIY3XZh2H39K49A/pub?gid=1547197644&single=true&output=csv";
+
+// Auto-refresh every 5 minutes (300000 ms). Change if needed.
+const REFRESH_MS = 300000;
+// ═══════════════════════════════════════════════
+
+// ── Column header mappings (match your sheet exactly) ──
 const COL = {
-  FIRST: "First Name", LAST: "Last Name",
-  GENDER: "Gender",    RACE: "Race Category",
-  PHONE:  "WhatsApp Number", PAID: "Paid",
+  FIRST_NAME: "First Name",
+  LAST_NAME:  "Last Name",
+  GENDER:     "Gender",
+  RACE:       "Race Category",
+  WHATSAPP:   "WhatsApp Number",
+  PAID:       "Paid",
 };
 
-let runners = [], filter = "all", cat = "all", q = "", cdSec, cdTimer, pending = null;
+let allRunners = [];
+let currentFilter = "all";
+let currentCat = "all";
+let searchQuery = "";
+let countdownSec = REFRESH_MS / 1000;
+let countdownTimer;
 
-// Title
-(()=>{
-  const w = MARATHON_NAME.split(" "), last = w.pop();
-  document.getElementById("title-el").innerHTML = w.join(" ") + " <span>" + last + "</span>";
-  document.title = MARATHON_NAME + " — Registration Tracker";
-})();
+// ── Set marathon name ──
+document.getElementById("marathon-title-el").innerHTML =
+  MARATHON_NAME.split(" ").slice(0, -1).join(" ") +
+  " <span>" + MARATHON_NAME.split(" ").slice(-1)[0] + "</span>";
+document.title = MARATHON_NAME + " — Registration Tracker";
 
-// Helpers
-const extractKm = raw => {
+// ── Extract KM from race category text ──
+function extractKm(raw) {
   if (!raw) return "N/A";
   const m = raw.match(/(\d+\.?\d*)\s*km?/i);
   if (m) return m[1] + "KM";
-  const w = raw.match(/\b(half|full|3|5|10|21|42)\b/i);
-  if (!w) return raw.trim().substring(0,8);
-  return ({half:"21KM",full:"42KM"})[w[1].toLowerCase()] || w[1] + "KM";
-};
-const isPaid = v => v && /^(yes|paid|true|1|y)$/i.test(String(v).trim());
-const ini    = (f,l) => ((f||"?")[0]+(l||"?")[0]).toUpperCase();
-const avCls  = g => { const v=(g||"").toLowerCase(); return v[0]==="f"?"avatar-f":v[0]==="m"?"avatar-m":"avatar-x"; };
-const esc    = s => s.replace(/\\/g,"\\\\").replace(/'/g,"\\'");
-
-// Toast
-let toastT;
-function toast(msg, type="success") {
-  const el = document.getElementById("toast");
-  el.textContent = msg; el.className = "toast "+type+" show";
-  clearTimeout(toastT); toastT = setTimeout(()=>el.classList.remove("show"), 3200);
+  const words = raw.match(/\b(half|full|3|5|10|21|42)\b/i);
+  if (words) {
+    const w = words[1].toLowerCase();
+    if (w === "half") return "21KM";
+    if (w === "full") return "42KM";
+    return w + "KM";
+  }
+  return raw.trim().substring(0, 8);
 }
 
-// Fetch
+// ── Determine paid status ──
+function isPaid(val) {
+  if (!val) return false;
+  return /^(yes|paid|true|1|y)$/i.test(val.trim());
+}
+
+// ── Get initials for avatar ──
+function initials(first, last) {
+  return ((first || "?")[0] + (last || "?")[0]).toUpperCase();
+}
+
+// ── Avatar class by gender ──
+function avatarClass(gender) {
+  const g = (gender || "").toLowerCase();
+  if (g.startsWith("f")) return "avatar-f";
+  if (g.startsWith("m")) return "avatar-m";
+  return "avatar-x";
+}
+
+// ── Fetch & parse ──
 function fetchData() {
-  if (APPS_SCRIPT_URL === "YOUR_APPS_SCRIPT_WEB_APP_URL_HERE") { showConfig(); return; }
-  fetch(APPS_SCRIPT_URL + "?action=read")
-    .then(r => r.json())
-    .then(d => {
-      if (d.error) throw new Error(d.error);
-      runners = d.rows || [];
-      updateStats(); buildCats(); render();
-      const base = "Updated " + new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});
-      const el = document.getElementById("last-updated");
-      el.setAttribute("data-base", base); el.textContent = base;
-      resetCD();
-    })
-    .catch(e => showError(e.message));
+  if (CSV_URL === "YOUR_GOOGLE_SHEET_CSV_URL_HERE") {
+    showConfigBanner();
+    return;
+  }
+
+  const proxyUrl = CSV_URL; // direct fetch (CORS must be open via Google's publish)
+
+  Papa.parse(proxyUrl, {
+    download: true,
+    header: true,
+    skipEmptyLines: true,
+    complete(results) {
+      allRunners = results.data;
+      updateStats();
+      buildCategoryFilters();
+      renderList();
+      const now = new Date();
+      document.getElementById("last-updated").textContent =
+        "Updated " + now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      resetCountdown();
+    },
+    error(err) {
+      showError(err.message || "Failed to fetch data.");
+    }
+  });
 }
 
-// Stats
+function showConfigBanner() {
+  document.getElementById("runners-list").innerHTML = `
+    <div class="config-banner">
+      <strong>⚙️ Setup Required</strong>
+      Replace <code>YOUR_GOOGLE_SHEET_CSV_URL_HERE</code> in this file with your Google Sheet CSV URL.<br><br>
+      <strong>How to get the URL:</strong><br>
+      1. Open your Google Sheet<br>
+      2. File → Share → Publish to web<br>
+      3. Select the sheet → choose <em>Comma-separated values (.csv)</em><br>
+      4. Click Publish and copy the URL<br>
+      5. Paste it into the <code>CSV_URL</code> variable at the top of the &lt;script&gt; tag in this file.
+    </div>`;
+  document.getElementById("stat-total").textContent = "—";
+  document.getElementById("stat-paid").textContent = "—";
+  document.getElementById("stat-unpaid").textContent = "—";
+  document.getElementById("results-count").textContent = "";
+}
+
+function showError(msg) {
+  document.getElementById("runners-list").innerHTML = `
+    <div class="error-card">
+      <strong>Could not load data</strong>
+      ${msg}<br><br>
+      Make sure your Google Sheet is published as CSV and the URL is correct.
+      Check that the sheet is set to "Anyone with the link can view".
+    </div>`;
+}
+
+// ── Stats ──
 function updateStats() {
-  const p = runners.filter(r=>isPaid(r[COL.PAID])).length;
-  document.getElementById("s-total").textContent  = runners.length;
-  document.getElementById("s-paid").textContent   = p;
-  document.getElementById("s-unpaid").textContent = runners.length - p;
+  const paid = allRunners.filter(r => isPaid(r[COL.PAID])).length;
+  document.getElementById("stat-total").textContent = allRunners.length;
+  document.getElementById("stat-paid").textContent = paid;
+  document.getElementById("stat-unpaid").textContent = allRunners.length - paid;
 }
 
-// Category pills
-function buildCats() {
-  const cats = [...new Set(runners.map(r=>extractKm(r[COL.RACE])))].filter(c=>c!=="N/A").sort((a,b)=>parseInt(a)-parseInt(b));
-  cats.unshift("all");
-  document.getElementById("cat-row").innerHTML = cats.map(c=>`
-    <button class="cat-btn ${c===cat?"active":""}" onclick="setCat('${c}')">
-      ${c==="all"?"All Distances":c}
+// ── Category filters ──
+function buildCategoryFilters() {
+  const cats = new Set();
+  allRunners.forEach(r => cats.add(extractKm(r[COL.RACE])));
+  const sorted = [...cats].filter(c => c !== "N/A").sort((a, b) => {
+    return parseInt(a) - parseInt(b);
+  });
+  sorted.unshift("all");
+
+  const row = document.getElementById("cat-row");
+  row.innerHTML = sorted.map(c => `
+    <button class="cat-btn ${c === currentCat ? "active" : ""}" onclick="setCat('${c}')">
+      ${c === "all" ? "All Distances" : c}
     </button>`).join("");
 }
 
-function setCat(c) {
-  cat = c;
-  document.querySelectorAll(".cat-btn").forEach(b=>b.classList.toggle("active",
-    (c==="all"&&b.textContent.trim()==="All Distances")||b.textContent.trim()===c));
-  render();
+function setCat(cat) {
+  currentCat = cat;
+  document.querySelectorAll(".cat-btn").forEach(b => b.classList.toggle("active", b.textContent.trim() === (cat === "all" ? "All Distances" : cat)));
+  renderList();
 }
 
+// ── Filter ──
 function setFilter(f) {
-  filter = f;
-  document.querySelectorAll(".filter-btn").forEach(b=>{
-    b.className="filter-btn";
-    if(b.dataset.f===f) b.classList.add("active-"+f);
+  currentFilter = f;
+  document.querySelectorAll(".filter-btn").forEach(b => {
+    b.className = "filter-btn";
+    if (b.dataset.filter === f) b.classList.add("active-" + f);
   });
-  render();
+  renderList();
 }
 
-// Render
-function render() {
-  const sq = q.toLowerCase().trim();
-  const filtered = runners.filter(r => {
-    const name = ((r[COL.FIRST]||"")+" "+(r[COL.LAST]||"")).toLowerCase();
+// ── Render ──
+function renderList() {
+  const q = searchQuery.toLowerCase().trim();
+
+  const filtered = allRunners.filter(r => {
+    const name = ((r[COL.FIRST_NAME] || "") + " " + (r[COL.LAST_NAME] || "")).toLowerCase();
     const paid = isPaid(r[COL.PAID]);
-    const km   = extractKm(r[COL.RACE]);
-    if (sq && !name.includes(sq)) return false;
-    if (filter==="paid"   && !paid) return false;
-    if (filter==="unpaid" &&  paid) return false;
-    if (cat!=="all" && km!==cat)    return false;
+    const cat = extractKm(r[COL.RACE]);
+
+    if (q && !name.includes(q)) return false;
+    if (currentFilter === "paid" && !paid) return false;
+    if (currentFilter === "unpaid" && paid) return false;
+    if (currentCat !== "all" && cat !== currentCat) return false;
     return true;
   });
 
   document.getElementById("results-count").textContent =
-    filtered.length + " runner"+(filtered.length!==1?"s":"")+" shown";
+    filtered.length + " runner" + (filtered.length !== 1 ? "s" : "") + " shown";
 
-  if (!filtered.length) {
-    document.getElementById("list").innerHTML = `
+  if (filtered.length === 0) {
+    document.getElementById("runners-list").innerHTML = `
       <div class="state-box">
         <div class="state-icon">🔍</div>
         <div class="state-title">No runners found</div>
         <div class="state-sub">Try adjusting your search or filter.</div>
-      </div>`; return;
+      </div>`;
+    return;
   }
 
-  document.getElementById("list").innerHTML = filtered.map((r,i) => {
-    const first = r[COL.FIRST]||"", last = r[COL.LAST]||"";
+  document.getElementById("runners-list").innerHTML = filtered.map((r, i) => {
+    const first = r[COL.FIRST_NAME] || "";
+    const last  = r[COL.LAST_NAME]  || "";
+    const gender = r[COL.GENDER] || "";
     const km    = extractKm(r[COL.RACE]);
     const paid  = isPaid(r[COL.PAID]);
-    const phone = r[COL.PHONE]||"";
-    const ri    = r.__rowIndex;
+    const phone = r[COL.WHATSAPP] || "";
+    const av    = avatarClass(gender);
+    const ini   = initials(first, last);
+
     return `
-      <div class="runner-card" style="animation-delay:${Math.min(i*18,240)}ms">
-        <div class="runner-avatar ${avCls(r[COL.GENDER])}">${ini(first,last)}</div>
+      <div class="runner-card" style="animation-delay:${Math.min(i * 25, 300)}ms">
+        <div class="runner-avatar ${av}">${ini}</div>
         <div class="runner-info">
           <div class="runner-name">${first} ${last}</div>
           <div class="runner-meta">
             <span class="race-badge">${km}</span>
-            ${phone?`<span class="runner-num">${phone}</span>`:""}
+            ${phone ? `<span class="runner-num">${phone}</span>` : ""}
           </div>
         </div>
-        <div class="runner-right">
-          <span class="fee-badge ${paid?"fee-paid":"fee-unpaid"}">${paid?"Paid":"Unpaid"}</span>
-          ${!paid?`<button class="mark-btn" onclick="openModal(${ri},'${esc(first+" "+last)}','${esc(km)}')">✓ Mark Paid</button>`:""}
-        </div>
+        <div class="fee-badge ${paid ? "fee-paid" : "fee-unpaid"}">${paid ? "Paid" : "Unpaid"}</div>
       </div>`;
   }).join("");
 }
 
-document.getElementById("search-input").addEventListener("input",function(){ q=this.value; render(); });
+// ── Search ──
+document.getElementById("search-input").addEventListener("input", function() {
+  searchQuery = this.value;
+  renderList();
+});
 
-// Modal
-function openModal(rowIndex, name, km) {
-  pending = {rowIndex, name, km};
-  document.getElementById("m-name").textContent = name;
-  document.getElementById("m-meta").textContent = km + " · Unpaid";
-  document.getElementById("m-pw").value = "";
-  document.getElementById("m-err").className = "modal-error";
-  document.getElementById("m-btn").disabled = false;
-  document.getElementById("m-btn").textContent = "✓ Mark as Paid";
-  document.getElementById("modal").style.display = "flex";
-  setTimeout(()=>document.getElementById("m-pw").focus(), 300);
-}
-
-function closeModal() {
-  document.getElementById("modal").style.display = "none";
-  pending = null;
-}
-
-function confirmPaid() {
-  if (!pending) return;
-  const pw = document.getElementById("m-pw").value;
-  if (!pw) { setModalErr("Please enter the admin password."); return; }
-
-  const btn = document.getElementById("m-btn");
-  btn.disabled = true; btn.textContent = "Updating…";
-
-  fetch(APPS_SCRIPT_URL, {
-    method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({action:"markPaid", rowIndex:pending.rowIndex, password:pw}),
-  })
-  .then(r => r.json())
-  .then(d => {
-    if (d.error) throw new Error(d.error);
-    const r = runners.find(r=>r.__rowIndex===pending.rowIndex);
-    if (r) r[COL.PAID] = "Yes";
-    updateStats(); render();
-    const name = pending.name;
-    closeModal();
-    toast("✓ " + name + " marked as Paid");
-  })
-  .catch(e => {
-    btn.disabled = false; btn.textContent = "✓ Mark as Paid";
-    setModalErr(e.message==="Incorrect password"?"Incorrect password. Try again.":"Error: "+e.message);
-  });
-}
-
-function setModalErr(msg) {
-  const el = document.getElementById("m-err");
-  el.textContent = msg; el.className = "modal-error show";
-}
-
-// Countdown
-function resetCD() {
-  clearInterval(cdTimer); cdSec = REFRESH_MS/1000;
-  cdTimer = setInterval(()=>{
-    cdSec--;
+// ── Countdown timer ──
+function resetCountdown() {
+  clearInterval(countdownTimer);
+  countdownSec = REFRESH_MS / 1000;
+  countdownTimer = setInterval(() => {
+    countdownSec--;
+    const mins = Math.floor(countdownSec / 60);
+    const secs = countdownSec % 60;
     const el = document.getElementById("last-updated");
-    const base = el.getAttribute("data-base")||"";
-    el.textContent = base + " · Next: "+Math.floor(cdSec/60)+":"+String(cdSec%60).padStart(2,"0");
-    if (cdSec<=0) fetchData();
+    if (el) {
+      const base = el.getAttribute("data-base") || el.textContent.split(" | ")[0];
+      el.setAttribute("data-base", base);
+      el.textContent = base + " | Next: " + mins + ":" + String(secs).padStart(2, "0");
+    }
+    if (countdownSec <= 0) fetchData();
   }, 1000);
 }
 
-function showConfig() {
-  document.getElementById("list").innerHTML = `
-    <div class="config-banner">
-      <strong>⚙️ Setup Required</strong>
-      Open this file, find <code>APPS_SCRIPT_URL</code> near the top of the &lt;script&gt; block,
-      and replace it with your deployed Google Apps Script Web App URL.<br><br>
-      See <code>SETUP_GUIDE.md</code> for full step-by-step instructions.
-    </div>`;
-  ["s-total","s-paid","s-unpaid"].forEach(id=>document.getElementById(id).textContent="—");
-  document.getElementById("results-count").textContent="";
-}
-
-function showError(msg) {
-  document.getElementById("list").innerHTML=`
-    <div class="error-card">
-      <strong>Could not load data</strong>
-      ${msg}<br><br>
-      Check that your Apps Script Web App is deployed with access set to "Anyone".
-    </div>`;
-}
-
+// ── Init ──
 fetchData();
 setInterval(fetchData, REFRESH_MS);
 </script>
