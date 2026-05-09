@@ -47,9 +47,9 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:2
 .runners-list{padding:0 16px 100px;display:flex;flex-direction:column;gap:8px}
 .runner-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;display:flex;align-items:center;gap:14px;animation:fadeIn .25s ease both}
 @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-.runner-avatar{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-d);font-size:15px;font-weight:800;flex-shrink:0;text-transform:uppercase}
+.runner-avatar{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-d);font-size:15px;font-weight:800;flex-shrink:0;text-transform:uppercase;cursor:pointer}
 .avatar-m{background:rgba(59,130,246,.18);color:#60a5fa}.avatar-f{background:rgba(236,72,153,.18);color:#f472b6}.avatar-x{background:rgba(139,92,246,.18);color:#a78bfa}
-.runner-info{flex:1;min-width:0}
+.runner-info{flex:1;min-width:0;cursor:pointer}
 .runner-name{font-family:var(--font-d);font-size:17px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:4px}
 .runner-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .race-badge{font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:3px 8px;border-radius:5px;background:rgba(245,200,66,.12);color:var(--gold);border:1px solid rgba(245,200,66,.25)}
@@ -69,6 +69,8 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:2
 .refresh-bar{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--muted);z-index:200}
 .refresh-btn{background:none;border:1px solid var(--border);border-radius:6px;padding:5px 12px;font-family:var(--font);font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;transition:all .2s}
 .refresh-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+/* Modals */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:500;display:flex;align-items:flex-end;justify-content:center;animation:overlayIn .2s ease}
 @keyframes overlayIn{from{opacity:0}to{opacity:1}}
 .modal-sheet{background:var(--surface);border:1px solid var(--border2);border-bottom:none;border-radius:20px 20px 0 0;padding:24px 20px 36px;width:100%;max-width:480px;animation:sheetUp .25s cubic-bezier(.34,1.56,.64,1)}
@@ -85,6 +87,13 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:2
 .modal-confirm-btn:hover{filter:brightness(1.1)}.modal-confirm-btn:disabled{opacity:.5;cursor:not-allowed}
 .modal-cancel-btn{width:100%;padding:12px;border-radius:12px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:var(--font);font-size:15px;font-weight:600;cursor:pointer}
 .modal-cancel-btn:hover{border-color:var(--border2);color:var(--text)}
+
+/* Details Grid inside Details Modal */
+.details-grid{display:flex;flex-direction:column;gap:12px;margin-bottom:24px}
+.detail-item{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;gap:2px}
+.detail-label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px}
+.detail-val{font-size:15px;font-weight:500;color:var(--text)}
+
 .toast{position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-80px);background:var(--surface);border:1px solid var(--border2);border-radius:12px;padding:12px 20px;font-size:14px;font-weight:600;z-index:999;transition:transform .35s cubic-bezier(.34,1.56,.64,1);white-space:nowrap}
 .toast.show{transform:translateX(-50%) translateY(0)}
 .toast.success{color:var(--paid-text);border-color:var(--paid-border)}
@@ -100,6 +109,8 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:2
   .runners-list{padding:0 24px 100px;max-width:720px;margin:0 auto}
   .category-row{padding:12px 24px 0}
   .results-count{padding:10px 24px 6px}
+  .modal-overlay{align-items:center}
+  .modal-sheet{border-radius:20px;border-bottom:1px solid var(--border2)}
 }
 </style>
 </head>
@@ -161,6 +172,47 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:2
   </div>
 </div>
 
+<div class="modal-overlay" id="details-modal" style="display:none" onclick="if(event.target===this)closeDetailsModal()">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-runner-name" id="d-name">Runner Name</div>
+    <div class="modal-sub" id="d-meta">Profile Details</div>
+    
+    <div class="details-grid">
+      <div class="detail-item">
+        <div class="detail-label">First Name</div>
+        <div class="detail-val" id="d-first">—</div>
+      </div>
+      <div class="detail-item">
+        <div class="detail-label">Last Name</div>
+        <div class="detail-val" id="d-last">—</div>
+      </div>
+      <div class="detail-item">
+        <div class="detail-label">Gender</div>
+        <div class="detail-val" id="d-gender">—</div>
+      </div>
+      <div class="detail-item">
+        <div class="detail-label">Date of Birth</div>
+        <div class="detail-val" id="d-dob">—</div>
+      </div>
+      <div class="detail-item">
+        <div class="detail-label">Race Category</div>
+        <div class="detail-val" id="d-race">—</div>
+      </div>
+      <div class="detail-item">
+        <div class="detail-label">WhatsApp Number</div>
+        <div class="detail-val" id="d-phone">—</div>
+      </div>
+      <div class="detail-item">
+        <div class="detail-label">T-Shirt Size</div>
+        <div class="detail-val" id="d-tshirt">—</div>
+      </div>
+    </div>
+    
+    <button class="modal-cancel-btn" onclick="closeDetailsModal()">Close</button>
+  </div>
+</div>
+
 <script>
 // ════════════════════════════════════════════════════
 // CONFIGURATION — paste your values here
@@ -174,13 +226,14 @@ const REFRESH_MS = 300000; // 5 minutes
 const COL = {
   FIRST:"First Name", LAST:"Last Name", GENDER:"Gender",
   RACE:"Race Category", PHONE:"WhatsApp Number", PAID:"Paid",
+  DOB:"Date of birth", TSHIRT:"T Shirts Size"
 };
 
 let runners=[], filter="all", cat="all", q="", cdSec, cdTimer, pending=null;
 let cbCounter = 0; // unique callback counter for JSONP
 
 // Set title
-(()=>{
+(() => {
   const w=MARATHON_NAME.split(" "), last=w.pop();
   document.getElementById("title-el").innerHTML=w.join(" ")+" <span>"+last+"</span>";
   document.title=MARATHON_NAME+" — Registration Tracker";
@@ -210,7 +263,6 @@ function jsonp(url, params) {
       if (el) el.remove();
     }
 
-    // Build the URL with callback param
     const allParams = Object.assign({ callback: cbName }, params);
     const qs = Object.keys(allParams)
       .map(k => encodeURIComponent(k) + "=" + encodeURIComponent(allParams[k]))
@@ -244,7 +296,7 @@ async function fetchData() {
   }
 }
 
-// ── MARK PAID (also via JSONP GET to avoid preflight) ──
+// ── MARK PAID (via JSONP GET) ──
 async function callMarkPaid(rowIndex, password) {
   return jsonp(APPS_SCRIPT_URL, { action: "markPaid", rowIndex, password });
 }
@@ -262,6 +314,15 @@ const isPaid = v => v && /^(yes|paid|true|1|y)$/i.test(String(v).trim());
 const ini    = (f,l) => ((f||"?")[0]+(l||"?")[0]).toUpperCase();
 const avCls  = g => { const v=(g||"").toLowerCase(); return v[0]==="f"?"avatar-f":v[0]==="m"?"avatar-m":"avatar-x"; };
 const esc    = s => String(s).replace(/\\/g,"\\\\").replace(/'/g,"\\'").replace(/"/g,"&quot;");
+
+// Option B Date Formatting (e.g., "15 Dec 1995")
+function formatDate(rawDate) {
+  if (!rawDate) return "—";
+  const d = new Date(rawDate);
+  if (isNaN(d.getTime())) return rawDate; // Fallback to raw if unparseable
+  const options = { day: 'numeric', month: 'short', year: 'numeric' };
+  return d.toLocaleDateString('en-US', options);
+}
 
 // Toast
 let toastT;
@@ -329,8 +390,8 @@ function render() {
     const km=extractKm(r[COL.RACE]), paid=isPaid(r[COL.PAID]), phone=r[COL.PHONE]||"", ri=r.__rowIndex;
     return `
       <div class="runner-card" style="animation-delay:${Math.min(i*18,240)}ms">
-        <div class="runner-avatar ${avCls(r[COL.GENDER])}">${ini(first,last)}</div>
-        <div class="runner-info">
+        <div class="runner-avatar ${avCls(r[COL.GENDER])}" onclick="openDetailsModal(${ri})">${ini(first,last)}</div>
+        <div class="runner-info" onclick="openDetailsModal(${ri})">
           <div class="runner-name">${first} ${last}</div>
           <div class="runner-meta">
             <span class="race-badge">${km}</span>
@@ -347,6 +408,34 @@ function render() {
 
 document.getElementById("search-input").addEventListener("input",function(){q=this.value;render();});
 
+// Details Modal Handlers
+function openDetailsModal(rowIndex) {
+  const r = runners.find(runner => runner.__rowIndex === rowIndex);
+  if (!r) return;
+
+  const first = r[COL.FIRST] || "—";
+  const last = r[COL.LAST] || "—";
+  const paid = isPaid(r[COL.PAID]) ? "Paid" : "Unpaid";
+
+  document.getElementById("d-name").textContent = first + " " + last;
+  document.getElementById("d-meta").textContent = extractKm(r[COL.RACE]) + " · " + paid;
+  
+  document.getElementById("d-first").textContent = first;
+  document.getElementById("d-last").textContent = last;
+  document.getElementById("d-gender").textContent = r[COL.GENDER] || "—";
+  document.getElementById("d-dob").textContent = formatDate(r[COL.DOB]);
+  document.getElementById("d-race").textContent = r[COL.RACE] || "—";
+  document.getElementById("d-phone").textContent = r[COL.PHONE] || "—";
+  document.getElementById("d-tshirt").textContent = r[COL.TSHIRT] || "—";
+
+  document.getElementById("details-modal").style.display = "flex";
+}
+
+function closeDetailsModal() {
+  document.getElementById("details-modal").style.display = "none";
+}
+
+// Payment Confirmation Handlers
 function openModal(rowIndex,name,km){
   pending={rowIndex,name,km};
   document.getElementById("m-name").textContent=name;
