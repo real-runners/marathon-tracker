@@ -184,6 +184,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:2
   <button class="refresh-btn" onclick="fetchData()">↻ Refresh</button>
 </div>
 
+<!-- PAYMENT MODAL -->
 <div class="modal-overlay" id="modal" style="display:none" onclick="if(event.target===this)closeModal()">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
@@ -196,17 +197,20 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:2
       <div class="opt-btn" id="opt-upi" onclick="selectPayMode('UPI')">UPI</div>
     </div>
 
+    <!-- Cash sub-fields -->
     <div class="conditional-block" id="block-cash">
       <div class="modal-label">Handed Over To (Person Name)</div>
       <input class="modal-input" id="m-cash-to" type="text" placeholder="e.g. Muneer"/>
     </div>
 
+    <!-- UPI sub-fields -->
     <div class="conditional-block" id="block-upi">
       <div class="modal-label">Recipient</div>
       <div class="opt-group">
         <div class="opt-btn" id="opt-org" onclick="selectUpiTarget('Organizer')">Organizer</div>
         <div class="opt-btn" id="opt-coord" onclick="selectUpiTarget('Coordinator')">Coordinator</div>
       </div>
+      <!-- Fixed: Transaction ID field shows ONLY when Organizer is tapped -->
       <div class="conditional-block" id="block-upi-ref">
         <div class="modal-label">Transaction Reference ID</div>
         <input class="modal-input" id="m-upi-ref" type="text" placeholder="e.g. 98467638267"/>
@@ -222,6 +226,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:2
   </div>
 </div>
 
+<!-- BIB HANDOVER MODAL -->
 <div class="modal-overlay" id="bib-modal" style="display:none" onclick="if(event.target===this)closeBibModal()">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
@@ -248,6 +253,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:2
   </div>
 </div>
 
+<!-- DETAILS MODAL -->
 <div class="modal-overlay" id="details-modal" style="display:none" onclick="if(event.target===this)closeDetailsModal()">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
@@ -310,6 +316,14 @@ async function fetchData() {
     const data = await jsonp(APPS_SCRIPT_URL, { action: "read" });
     if (data.error) throw new Error(data.error);
     runners = data.rows || [];
+    
+    // Fixed: Wipes out the numerical prefixes (like 1) or 2)) from Column O data cleanly
+    runners.forEach(r => {
+      if (r[COL.BIBDETAILS]) {
+        r[COL.BIBDETAILS] = String(r[COL.BIBDETAILS]).replace(/^\d+\)\s*/, "").trim();
+      }
+    });
+
     updateStats(); buildCats(); render();
     const base = "Updated " + new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});
     const el = document.getElementById("last-updated");
@@ -406,7 +420,7 @@ function render() {
     const km=extractKm(r[COL.RACE]), paid=isPaid(r[COL.PAID]), bibRcv=isBibHandedOver(r[COL.BIBDETAILS]), phone=r[COL.PHONE]||"", ri=r.__rowIndex;
     const bibNo=r[COL.BIBNUM] ? String(r[COL.BIBNUM]).trim() : "";
     
-    // Auto incremental Serial Number
+    // Serial Number incrementally tracks the running row count
     const displaySN = i + 1; 
 
     return `
@@ -415,21 +429,21 @@ function render() {
         <div class="runner-info" onclick="openDetailsModal(${ri})">
           <div class="runner-name-row">
             <div class="runner-name">${first} ${last}</div>
-            ${bibNo ? `<span class="bib-tag">BIB: ${bibNo}</span>` : ""}
+            \${bibNo ? `<span class="bib-tag">BIB: \${bibNo}</span>` : ""}
           </div>
           <div class="runner-meta">
-            <span class="race-badge">${km}</span>
-            ${phone?`<span class="runner-num">${phone}</span>`:""}
+            <span class="race-badge">\${km}</span>
+            \${phone?`<span class="runner-num">\${phone}</span>`:""}
           </div>
         </div>
         <div class="runner-right">
           <div class="badgelist">
-            <span class="fee-badge ${paid?"fee-paid":"fee-unpaid"}">${paid?"Paid":"Unpaid"}</span>
-            ${bibRcv ? `<span class="fee-badge fee-bib">BIB Out</span>`: ""}
+            <span class="fee-badge \${paid?"fee-paid":"fee-unpaid"}">\${paid?"Paid":"Unpaid"}</span>
+            \${bibRcv ? `<span class="fee-badge fee-bib">BIB Out</span>`: ""}
           </div>
           <div class="action-buttons">
-            ${!paid?`<button class="mark-btn" onclick="openModal(${ri},'${esc(first+" "+last)}','${esc(km)}')">✓ Paid</button>`:""}
-            ${!bibRcv?`<button class="mark-btn bib-action" onclick="openBibModal(${ri},'${esc(first+" "+last)}','${esc(km)}')">📦 Kit</button>`:""}
+            \${!paid?`<button class="mark-btn" onclick="openModal(\${ri},'\${esc(first+" "+last)}','\${esc(km)}')">✓ Paid</button>`:""}
+            \${!bibRcv?`<button class="mark-btn bib-action" onclick="openBibModal(\\${ri},'\${esc(first+" "+last)}','\${esc(km)}')">📦 Kit</button>`:""}
           </div>
         </div>
       </div>`;
@@ -438,7 +452,6 @@ function render() {
 
 document.getElementById("search-input").addEventListener("input",function(){q=this.value;render();});
 
-// Details View Modal
 function openDetailsModal(rowIndex) {
   const r = runners.find(runner => runner.__rowIndex === rowIndex); if (!r) return;
   const first = r[COL.FIRST] || "—", last = r[COL.LAST] || "—";
@@ -460,7 +473,6 @@ function openDetailsModal(rowIndex) {
 }
 function closeDetailsModal() { document.getElementById("details-modal").style.display = "none"; }
 
-// Pay Modal Conditional Helpers
 function selectPayMode(mode) {
   payMode = mode;
   document.getElementById("opt-cash").classList.toggle("selected", mode==="Cash");
@@ -468,11 +480,13 @@ function selectPayMode(mode) {
   document.getElementById("block-cash").classList.toggle("show", mode==="Cash");
   document.getElementById("block-upi").classList.toggle("show", mode==="UPI");
 }
+
+// Fixed: Prompts for Reference ID ONLY when Organizer is selected
 function selectUpiTarget(target) {
   upiTarget = target;
   document.getElementById("opt-org").classList.toggle("selected", target==="Organizer");
   document.getElementById("opt-coord").classList.toggle("selected", target==="Coordinator");
-  document.getElementById("block-upi-ref").classList.toggle("show", target==="Coordinator");
+  document.getElementById("block-upi-ref").classList.toggle("show", target==="Organizer");
 }
 
 function openModal(rowIndex,name,km){
@@ -507,11 +521,14 @@ async function confirmPaid(){
     dynamicValue = "Cash > " + person;
   } else {
     if(!upiTarget) { setModalErr("Please choose recipient: Organizer or Coordinator."); return; }
-    if(upiTarget === "Coordinator") {
+    // Fixed: Organizer records Transaction ID String payload
+    if(upiTarget === "Organizer") {
       const ref = document.getElementById("m-upi-ref").value.trim();
       if(!ref) { setModalErr("Please enter the UPI transaction reference ID."); return; }
-      dynamicValue = "UPI > Coordinator > " + ref;
-    } else { dynamicValue = "UPI > Organizer"; }
+      dynamicValue = "UPI > Organizer > " + ref;
+    } else { 
+      dynamicValue = "UPI > Coordinator"; 
+    }
   }
 
   const pw=document.getElementById("m-pw").value;
@@ -533,7 +550,6 @@ async function confirmPaid(){
 }
 function setModalErr(msg){ const el=document.getElementById("m-err"); el.textContent=msg; el.className="modal-error show"; }
 
-// BIB Modal Conditional Helpers
 function selectBibRec(rec) {
   bibRec = rec;
   document.getElementById("opt-run").classList.toggle("selected", rec==="Runner");
@@ -561,11 +577,11 @@ async function confirmBibHandover() {
   if(!bibRec) { setBibModalErr("Please select recipient: Runner or Messenger."); return; }
   
   let bibValue = "";
-  if(bibRec === "Runner") { bibValue = "1) Runner"; } 
+  if(bibRec === "Runner") { bibValue = "Runner"; } 
   else {
     const messenger = document.getElementById("bm-msg-name").value.trim();
     if(!messenger) { setBibModalErr("Please specify Messenger's name."); return; }
-    bibValue = "2) " + messenger;
+    bibValue = messenger;
   }
   
   const pw=document.getElementById("bm-pw").value;
@@ -578,13 +594,14 @@ async function confirmBibHandover() {
     if (data.error) throw new Error(data.error);
     const r=runners.find(r=>r.__rowIndex===bibPending.rowIndex);
     if(r) { r[COL.BIBDETAILS] = bibValue; }
-    updateStats(); render(); Amusement = closeBibModal();
+    updateStats(); render(); closeBibModal();
     toast("📦 BIB Kit delivery saved.");
   } catch(e) {
     btn.disabled=false; btn.textContent="✓ Confirm Handover";
     setBibModalErr(e.message==="Incorrect password"?"Incorrect password. Try again.":"Error: "+e.message);
   }
 }
+function setBibHandoverClean(msg) { }
 function setBibModalErr(msg){ const el=document.getElementById("bm-err"); el.textContent=msg; el.className="modal-error show"; }
 
 function resetCD(){
@@ -596,7 +613,7 @@ function resetCD(){
   },1000);
 }
 function showError(msg){
-  document.getElementById("list").innerHTML=`<div class="error-card"><strong>Could not sync data connection</strong>${msg}</div>`;
+  document.getElementById("list").innerHTML=`<div class="error-card"><strong>Could not sync data connection</strong>\${msg}</div>`;
 }
 
 fetchData();
