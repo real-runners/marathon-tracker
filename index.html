@@ -184,7 +184,6 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:2
   <button class="refresh-btn" onclick="fetchData()">↻ Refresh</button>
 </div>
 
-<!-- PAYMENT MODAL -->
 <div class="modal-overlay" id="modal" style="display:none" onclick="if(event.target===this)closeModal()">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
@@ -197,20 +196,17 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:2
       <div class="opt-btn" id="opt-upi" onclick="selectPayMode('UPI')">UPI</div>
     </div>
 
-    <!-- Cash sub-fields -->
     <div class="conditional-block" id="block-cash">
       <div class="modal-label">Handed Over To (Person Name)</div>
       <input class="modal-input" id="m-cash-to" type="text" placeholder="e.g. Muneer"/>
     </div>
 
-    <!-- UPI sub-fields -->
     <div class="conditional-block" id="block-upi">
       <div class="modal-label">Recipient</div>
       <div class="opt-group">
         <div class="opt-btn" id="opt-org" onclick="selectUpiTarget('Organizer')">Organizer</div>
         <div class="opt-btn" id="opt-coord" onclick="selectUpiTarget('Coordinator')">Coordinator</div>
       </div>
-      <!-- Fixed: Transaction ID field shows ONLY when Organizer is tapped -->
       <div class="conditional-block" id="block-upi-ref">
         <div class="modal-label">Transaction Reference ID</div>
         <input class="modal-input" id="m-upi-ref" type="text" placeholder="e.g. 98467638267"/>
@@ -226,7 +222,6 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:2
   </div>
 </div>
 
-<!-- BIB HANDOVER MODAL -->
 <div class="modal-overlay" id="bib-modal" style="display:none" onclick="if(event.target===this)closeBibModal()">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
@@ -253,7 +248,6 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:2
   </div>
 </div>
 
-<!-- DETAILS MODAL -->
 <div class="modal-overlay" id="details-modal" style="display:none" onclick="if(event.target===this)closeDetailsModal()">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
@@ -317,7 +311,7 @@ async function fetchData() {
     if (data.error) throw new Error(data.error);
     runners = data.rows || [];
     
-    // Fixed: Wipes out the numerical prefixes (like 1) or 2)) from Column O data cleanly
+    // Cleans numeric prefix prefixes from column O values cleanly
     runners.forEach(r => {
       if (r[COL.BIBDETAILS]) {
         r[COL.BIBDETAILS] = String(r[COL.BIBDETAILS]).replace(/^\d+\)\s*/, "").trim();
@@ -419,8 +413,6 @@ function render() {
     const first=r[COL.FIRST]||"", last=r[COL.LAST]||"";
     const km=extractKm(r[COL.RACE]), paid=isPaid(r[COL.PAID]), bibRcv=isBibHandedOver(r[COL.BIBDETAILS]), phone=r[COL.PHONE]||"", ri=r.__rowIndex;
     const bibNo=r[COL.BIBNUM] ? String(r[COL.BIBNUM]).trim() : "";
-    
-    // Serial Number incrementally tracks the running row count
     const displaySN = i + 1; 
 
     return `
@@ -429,21 +421,21 @@ function render() {
         <div class="runner-info" onclick="openDetailsModal(${ri})">
           <div class="runner-name-row">
             <div class="runner-name">${first} ${last}</div>
-            \${bibNo ? `<span class="bib-tag">BIB: \${bibNo}</span>` : ""}
+            ${bibNo ? `<span class="bib-tag">BIB: ${bibNo}</span>` : ""}
           </div>
           <div class="runner-meta">
-            <span class="race-badge">\${km}</span>
-            \${phone?`<span class="runner-num">\${phone}</span>`:""}
+            <span class="race-badge">${km}</span>
+            ${phone?`<span class="runner-num">${phone}</span>`:""}
           </div>
         </div>
         <div class="runner-right">
           <div class="badgelist">
-            <span class="fee-badge \${paid?"fee-paid":"fee-unpaid"}">\${paid?"Paid":"Unpaid"}</span>
-            \${bibRcv ? `<span class="fee-badge fee-bib">BIB Out</span>`: ""}
+            <span class="fee-badge ${paid?"fee-paid":"fee-unpaid"}">${paid?"Paid":"Unpaid"}</span>
+            ${bibRcv ? `<span class="fee-badge fee-bib">BIB Out</span>`: ""}
           </div>
           <div class="action-buttons">
-            \${!paid?`<button class="mark-btn" onclick="openModal(\${ri},'\${esc(first+" "+last)}','\${esc(km)}')">✓ Paid</button>`:""}
-            \${!bibRcv?`<button class="mark-btn bib-action" onclick="openBibModal(\\${ri},'\${esc(first+" "+last)}','\${esc(km)}')">📦 Kit</button>`:""}
+            ${!paid?`<button class="mark-btn" onclick="openModal(${ri},'${esc(first+" "+last)}','${esc(km)}')">✓ Paid</button>`:""}
+            ${!bibRcv?`<button class="mark-btn bib-action" onclick="openBibModal(${ri},'${esc(first+" "+last)}','${esc(km)}')">📦 Kit</button>`:""}
           </div>
         </div>
       </div>`;
@@ -481,7 +473,6 @@ function selectPayMode(mode) {
   document.getElementById("block-upi").classList.toggle("show", mode==="UPI");
 }
 
-// Fixed: Prompts for Reference ID ONLY when Organizer is selected
 function selectUpiTarget(target) {
   upiTarget = target;
   document.getElementById("opt-org").classList.toggle("selected", target==="Organizer");
@@ -521,7 +512,6 @@ async function confirmPaid(){
     dynamicValue = "Cash > " + person;
   } else {
     if(!upiTarget) { setModalErr("Please choose recipient: Organizer or Coordinator."); return; }
-    // Fixed: Organizer records Transaction ID String payload
     if(upiTarget === "Organizer") {
       const ref = document.getElementById("m-upi-ref").value.trim();
       if(!ref) { setModalErr("Please enter the UPI transaction reference ID."); return; }
@@ -613,7 +603,7 @@ function resetCD(){
   },1000);
 }
 function showError(msg){
-  document.getElementById("list").innerHTML=`<div class="error-card"><strong>Could not sync data connection</strong>\${msg}</div>`;
+  document.getElementById("list").innerHTML=`<div class="error-card"><strong>Could not sync data connection</strong>${msg}</div>`;
 }
 
 fetchData();
