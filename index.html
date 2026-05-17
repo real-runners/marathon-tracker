@@ -12,54 +12,66 @@
   --text:#f0f0f5; --muted:#888899; --accent:#ff5c35; --gold:#f5c842;
   --paid-bg:rgba(22,163,74,0.15); --paid-text:#4ade80; --paid-border:rgba(74,222,128,0.3);
   --unpaid-bg:rgba(239,68,68,0.12); --unpaid-text:#f87171; --unpaid-border:rgba(248,113,113,0.3);
+  --blue-bg:rgba(59,130,246,0.15); --blue-text:#60a5fa; --blue-border:rgba(96,165,250,0.3);
   --radius:12px; --font:'Barlow','Segoe UI',sans-serif; --font-d:'Barlow Condensed','Segoe UI',sans-serif;
 }
 @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@600;700;800&display=swap');
 body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased}
-header{background:var(--surface);border-bottom:1px solid var(--border);padding:20px 16px 16px;position:sticky;top:0;z-index:100}
-.header-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:16px}
+header{background:var(--surface);border-bottom:1px solid var(--border);padding:20px 16px 12px;position:sticky;top:0;z-index:100}
+.header-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px}
 .marathon-title{font-family:var(--font-d);font-size:clamp(18px,5.5vw,24px);font-weight:800;letter-spacing:-.3px;line-height:1.1;text-transform:uppercase}
 .marathon-title span{color:var(--accent)}
 .live-badge{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);white-space:nowrap;padding-top:3px}
 .live-dot{width:7px;height:7px;border-radius:50%;background:#4ade80;animation:pulse 2s ease-in-out infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
-.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}
-.stat-card{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;text-align:center}
-.stat-num{font-family:var(--font-d);font-size:26px;font-weight:800;line-height:1;margin-bottom:3px}
-.stat-num.total{color:var(--text)}.stat-num.paid{color:var(--paid-text)}.stat-num.unpaid{color:var(--unpaid-text)}
-.stat-label{font-size:11px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:var(--muted)}
-.filter-row{display:flex;gap:8px;align-items:center}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:14px}
+.stat-card{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:8px 6px;text-align:center}
+.stat-num{font-family:var(--font-d);font-size:22px;font-weight:800;line-height:1;margin-bottom:3px}
+.stat-num.total{color:var(--text)}.stat-num.paid{color:var(--paid-text)}.stat-num.unpaid{color:var(--unpaid-text)}.stat-num.bib{color:var(--blue-text)}
+.stat-label{font-size:10px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--muted)}
+.filter-row{display:flex;flex-direction:column;gap:8px}
+.filter-row-top{display:flex;gap:8px;align-items:center}
 .search-wrap{flex:1;position:relative}
 .search-wrap svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none}
 .search-input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 10px 9px 34px;font-family:var(--font);font-size:14px;color:var(--text);outline:none;transition:border-color .2s}
 .search-input::placeholder{color:var(--muted)}.search-input:focus{border-color:var(--accent)}
-.filter-buttons{display:flex;gap:6px}
-.filter-btn{padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-family:var(--font);font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;white-space:nowrap}
+.filter-buttons{display:flex;gap:4px}
+.filter-btn{padding:8px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-family:var(--font);font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;white-space:nowrap}
 .filter-btn:hover{border-color:var(--border2);color:var(--text)}
 .filter-btn.active-all{background:var(--accent);border-color:var(--accent);color:#fff}
 .filter-btn.active-paid{background:var(--paid-bg);border-color:var(--paid-border);color:var(--paid-text)}
 .filter-btn.active-unpaid{background:var(--unpaid-bg);border-color:var(--unpaid-border);color:var(--unpaid-text)}
+.filter-btn.active-bib-rcv{background:var(--blue-bg);border-color:var(--blue-border);color:var(--blue-text)}
+.filter-btn.active-bib-pend{background:var(--unpaid-bg);border-color:var(--unpaid-border);color:var(--unpaid-text)}
+.bib-filter-row{display:flex;align-items:center;gap:8px;border-top:1px dashed rgba(255,255,255,0.05);padding-top:8px}
+.bib-filter-label{font-size:11px;font-weight:600;text-transform:uppercase;color:var(--muted);letter-spacing:0.5px}
 .category-row{display:flex;gap:6px;overflow-x:auto;padding:12px 16px 0;scrollbar-width:none}
 .category-row::-webkit-scrollbar{display:none}
 .cat-btn{padding:5px 12px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:var(--font);font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;white-space:nowrap}
 .cat-btn:hover{border-color:var(--border2);color:var(--text)}.cat-btn.active{background:var(--accent);border-color:var(--accent);color:#fff}
 .results-count{padding:10px 16px 6px;font-size:12px;color:var(--muted);font-weight:500}
 .runners-list{padding:0 16px 100px;display:flex;flex-direction:column;gap:8px}
-.runner-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;display:flex;align-items:center;gap:14px;animation:fadeIn .25s ease both}
+.runner-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;display:flex;align-items:center;gap:12px;animation:fadeIn .25s ease both}
 @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-.runner-avatar{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-d);font-size:15px;font-weight:800;flex-shrink:0;text-transform:uppercase;cursor:pointer}
-.avatar-m{background:rgba(59,130,246,.18);color:#60a5fa}.avatar-f{background:rgba(236,72,153,.18);color:#f472b6}.avatar-x{background:rgba(139,92,246,.18);color:#a78bfa}
+.runner-sn{width:32px;height:32px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:var(--font-d);font-size:14px;font-weight:700;color:var(--muted);flex-shrink:0}
 .runner-info{flex:1;min-width:0;cursor:pointer}
-.runner-name{font-family:var(--font-d);font-size:17px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:4px}
-.runner-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.race-badge{font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:3px 8px;border-radius:5px;background:rgba(245,200,66,.12);color:var(--gold);border:1px solid rgba(245,200,66,.25)}
+.runner-name-row{display:flex;align-items:center;gap:8px;margin-bottom:3px}
+.runner-name{font-family:var(--font-d);font-size:17px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bib-tag{font-family:var(--font-d);font-size:13px;font-weight:800;background:var(--gold);color:#000;padding:1px 5px;border-radius:4px;letter-spacing:0.3px}
+.runner-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.race-badge{font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:2px 6px;border-radius:5px;background:rgba(245,200,66,.12);color:var(--gold);border:1px solid rgba(245,200,66,.25)}
 .runner-num{font-size:12px;color:var(--muted);font-weight:500}
-.runner-right{display:flex;flex-direction:column;align-items:flex-end;gap:7px;flex-shrink:0}
-.fee-badge{padding:5px 11px;border-radius:8px;font-size:12px;font-weight:700;letter-spacing:.4px;text-transform:uppercase}
+.runner-right{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0}
+.badgelist{display:flex;gap:4px}
+.fee-badge{padding:3px 8px;border-radius:6px;font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase}
 .fee-paid{background:var(--paid-bg);color:var(--paid-text);border:1px solid var(--paid-border)}
 .fee-unpaid{background:var(--unpaid-bg);color:var(--unpaid-text);border:1px solid var(--unpaid-border)}
-.mark-btn{font-family:var(--font);font-size:11px;font-weight:600;padding:4px 9px;border-radius:6px;border:1px solid rgba(74,222,128,.35);background:rgba(22,163,74,.1);color:var(--paid-text);cursor:pointer;transition:all .18s;white-space:nowrap}
-.mark-btn:hover{background:rgba(22,163,74,.22);border-color:var(--paid-text)}.mark-btn:disabled{opacity:.4;cursor:not-allowed}
+.fee-bib{background:var(--blue-bg);color:var(--blue-text);border:1px solid var(--blue-border)}
+.action-buttons{display:flex;gap:4px}
+.mark-btn{font-family:var(--font);font-size:11px;font-weight:600;padding:4px 8px;border-radius:6px;border:1px solid rgba(74,222,128,.35);background:rgba(22,163,74,.1);color:var(--paid-text);cursor:pointer;transition:all .18s;white-space:nowrap}
+.mark-btn:hover{background:rgba(22,163,74,.22);border-color:var(--paid-text)}
+.mark-btn.bib-action{border-color:rgba(96,165,250,.35);background:rgba(59,130,246,.1);color:var(--blue-text)}
+.mark-btn.bib-action:hover{background:rgba(59,130,246,.22);border-color:var(--blue-text)}
 .state-box{text-align:center;padding:60px 24px;color:var(--muted)}
 .state-icon{font-size:40px;margin-bottom:12px;opacity:.5}
 .state-title{font-family:var(--font-d);font-size:18px;font-weight:700;color:var(--text);margin-bottom:6px}
@@ -73,22 +85,28 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:2
 /* Modals */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:500;display:flex;align-items:flex-end;justify-content:center;animation:overlayIn .2s ease}
 @keyframes overlayIn{from{opacity:0}to{opacity:1}}
-.modal-sheet{background:var(--surface);border:1px solid var(--border2);border-bottom:none;border-radius:20px 20px 0 0;padding:24px 20px 36px;width:100%;max-width:480px;animation:sheetUp .25s cubic-bezier(.34,1.56,.64,1)}
+.modal-sheet{background:var(--surface);border:1px solid var(--border2);border-bottom:none;border-radius:20px 20px 0 0;padding:24px 20px 36px;width:100%;max-width:480px;animation:sheetUp .25s cubic-bezier(.34,1.56,.64,1);max-height:92vh;overflow-y:auto}
 @keyframes sheetUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
 .modal-handle{width:36px;height:4px;background:var(--border2);border-radius:2px;margin:0 auto 20px}
 .modal-runner-name{font-family:var(--font-d);font-size:22px;font-weight:800;text-align:center;margin-bottom:4px}
 .modal-sub{text-align:center;font-size:13px;color:var(--muted);margin-bottom:20px}
-.modal-label{font-size:12px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
-.modal-input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;font-family:var(--font);font-size:16px;color:var(--text);outline:none;margin-bottom:12px;transition:border-color .2s;letter-spacing:2px}
+.modal-label{font-size:11px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.modal-input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;font-family:var(--font);font-size:15px;color:var(--text);outline:none;margin-bottom:12px;transition:border-color .2s}
 .modal-input:focus{border-color:var(--accent)}
+.modal-input.pw-field{letter-spacing:2px}
 .modal-error{background:rgba(239,68,68,.1);border:1px solid rgba(248,113,113,.3);border-radius:8px;padding:10px 14px;font-size:13px;color:var(--unpaid-text);margin-bottom:12px;display:none}
 .modal-error.show{display:block}
 .modal-confirm-btn{width:100%;padding:14px;border-radius:12px;border:none;background:var(--paid-text);color:#0a1a10;font-family:var(--font-d);font-size:17px;font-weight:800;letter-spacing:.5px;cursor:pointer;transition:all .18s;margin-bottom:10px}
 .modal-confirm-btn:hover{filter:brightness(1.1)}.modal-confirm-btn:disabled{opacity:.5;cursor:not-allowed}
 .modal-cancel-btn{width:100%;padding:12px;border-radius:12px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:var(--font);font-size:15px;font-weight:600;cursor:pointer}
 .modal-cancel-btn:hover{border-color:var(--border2);color:var(--text)}
+.opt-group{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.opt-btn{padding:10px;background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:8px;font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;text-align:center;transition:all .15s}
+.opt-btn.selected{background:var(--accent);border-color:var(--accent);color:#fff}
+.conditional-block{display:none;margin-top:4px}
+.conditional-block.show{display:block}
 
-/* Details Grid inside Details Modal */
+/* Details Grid */
 .details-grid{display:flex;flex-direction:column;gap:12px;margin-bottom:24px}
 .detail-item{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;gap:2px}
 .detail-label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px}
@@ -98,14 +116,11 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:2
 .toast.show{transform:translateX(-50%) translateY(0)}
 .toast.success{color:var(--paid-text);border-color:var(--paid-border)}
 .toast.error{color:var(--unpaid-text);border-color:var(--unpaid-border)}
-.config-banner{margin:16px;padding:14px 16px;background:rgba(245,200,66,.08);border:1px solid rgba(245,200,66,.3);border-radius:var(--radius);font-size:13px;color:var(--gold);line-height:1.7}
-.config-banner strong{display:block;margin-bottom:4px;font-size:14px}
-.config-banner code{background:rgba(245,200,66,.15);padding:1px 5px;border-radius:4px;font-family:monospace;font-size:12px;word-break:break-all}
 .error-card{margin:16px;padding:16px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);border-radius:var(--radius);font-size:13px;color:#f87171;line-height:1.7}
 .error-card strong{display:block;margin-bottom:6px;font-size:15px}
-.error-card code{background:rgba(239,68,68,.12);padding:2px 6px;border-radius:4px;font-family:monospace;font-size:12px;word-break:break-all;display:inline-block;margin-top:4px}
+
 @media(min-width:600px){
-  header{padding:24px 24px 18px}
+  header{padding:24px 24px 16px}
   .runners-list{padding:0 24px 100px;max-width:720px;margin:0 auto}
   .category-row{padding:12px 24px 0}
   .results-count{padding:10px 24px 6px}
@@ -127,18 +142,29 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:2
     <div class="stat-card"><div class="stat-num total" id="s-total">—</div><div class="stat-label">Total</div></div>
     <div class="stat-card"><div class="stat-num paid"  id="s-paid">—</div><div class="stat-label">Paid</div></div>
     <div class="stat-card"><div class="stat-num unpaid" id="s-unpaid">—</div><div class="stat-label">Unpaid</div></div>
+    <div class="stat-card"><div class="stat-num bib"    id="s-bib">—</div><div class="stat-label">BIB Kit</div></div>
   </div>
   <div class="filter-row">
-    <div class="search-wrap">
-      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-      </svg>
-      <input class="search-input" id="search-input" placeholder="Search by name…" type="search"/>
+    <div class="filter-row-top">
+      <div class="search-wrap">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+        <input class="search-input" id="search-input" placeholder="Search by name…" type="search"/>
+      </div>
+      <div class="filter-buttons">
+        <button class="filter-btn active-all"  data-f="all"    onclick="setFilter('all')">All</button>
+        <button class="filter-btn"             data-f="paid"   onclick="setFilter('paid')">Paid</button>
+        <button class="filter-btn"             data-f="unpaid" onclick="setFilter('unpaid')">Unpaid</button>
+      </div>
     </div>
-    <div class="filter-buttons">
-      <button class="filter-btn active-all"  data-f="all"    onclick="setFilter('all')">All</button>
-      <button class="filter-btn"             data-f="paid"   onclick="setFilter('paid')">Paid</button>
-      <button class="filter-btn"             data-f="unpaid" onclick="setFilter('unpaid')">Unpaid</button>
+    <div class="bib-filter-row">
+      <span class="bib-filter-label">BIB Kit:</span>
+      <div class="filter-buttons">
+        <button class="filter-btn active-all"   data-b="all"      onclick="setBibFilter('all')">All</button>
+        <button class="filter-btn"              data-b="received" onclick="setBibFilter('received')">Received</button>
+        <button class="filter-btn"              data-b="pending"  onclick="setBibFilter('pending')">Pending</button>
+      </div>
     </div>
   </div>
 </header>
@@ -163,12 +189,62 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:2
     <div class="modal-handle"></div>
     <div class="modal-runner-name" id="m-name">Runner Name</div>
     <div class="modal-sub" id="m-meta">10KM · Unpaid</div>
-    <div class="modal-label">Admin Password</div>
-    <input class="modal-input" id="m-pw" type="password" placeholder="••••••••"
-      autocomplete="current-password" onkeydown="if(event.key==='Enter')confirmPaid()"/>
+    
+    <div class="modal-label">Payment Mode</div>
+    <div class="opt-group">
+      <div class="opt-btn" id="opt-cash" onclick="selectPayMode('Cash')">Cash</div>
+      <div class="opt-btn" id="opt-upi" onclick="selectPayMode('UPI')">UPI</div>
+    </div>
+
+    <div class="conditional-block" id="block-cash">
+      <div class="modal-label">Handed Over To (Person Name)</div>
+      <input class="modal-input" id="m-cash-to" type="text" placeholder="e.g. Muneer"/>
+    </div>
+
+    <div class="conditional-block" id="block-upi">
+      <div class="modal-label">Recipient</div>
+      <div class="opt-group">
+        <div class="opt-btn" id="opt-org" onclick="selectUpiTarget('Organizer')">Organizer</div>
+        <div class="opt-btn" id="opt-coord" onclick="selectUpiTarget('Coordinator')">Coordinator</div>
+      </div>
+      <div class="conditional-block" id="block-upi-ref">
+        <div class="modal-label">Transaction Reference ID</div>
+        <input class="modal-input" id="m-upi-ref" type="text" placeholder="e.g. 98467638267"/>
+      </div>
+    </div>
+
+    <div class="modal-label" style="margin-top:12px;">Admin Password</div>
+    <input class="modal-input pw-field" id="m-pw" type="password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')confirmPaid()"/>
+    
     <div class="modal-error" id="m-err"></div>
-    <button class="modal-confirm-btn" id="m-btn" onclick="confirmPaid()">✓ Mark as Paid</button>
+    <button class="modal-confirm-btn" id="m-btn" onclick="confirmPaid()">✓ Submit Payment</button>
     <button class="modal-cancel-btn" onclick="closeModal()">Cancel</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="bib-modal" style="display:none" onclick="if(event.target===this)closeBibModal()">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-runner-name" id="bm-name">Runner Name</div>
+    <div class="modal-sub" id="bm-meta">10KM · Kit Handover</div>
+    
+    <div class="modal-label">Handover Recipient</div>
+    <div class="opt-group">
+      <div class="opt-btn" id="opt-run" onclick="selectBibRec('Runner')">Runner</div>
+      <div class="opt-btn" id="opt-msg" onclick="selectBibRec('Messenger')">Messenger</div>
+    </div>
+
+    <div class="conditional-block" id="block-msg">
+      <div class="modal-label">Messenger Name</div>
+      <input class="modal-input" id="bm-msg-name" type="text" placeholder="e.g. Jamal"/>
+    </div>
+
+    <div class="modal-label" style="margin-top:12px;">Admin Password</div>
+    <input class="modal-input pw-field" id="bm-pw" type="password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')confirmBibHandover()"/>
+    
+    <div class="modal-error" id="bm-err"></div>
+    <button class="modal-confirm-btn" id="bm-btn" style="background:var(--blue-text); color:#05101a;" onclick="confirmBibHandover()">✓ Confirm Handover</button>
+    <button class="modal-cancel-btn" onclick="closeBibModal()">Cancel</button>
   </div>
 </div>
 
@@ -179,109 +255,57 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:2
     <div class="modal-sub" id="d-meta">Profile Details</div>
     
     <div class="details-grid">
-      <div class="detail-item">
-        <div class="detail-label">First Name</div>
-        <div class="detail-val" id="d-first">—</div>
-      </div>
-      <div class="detail-item">
-        <div class="detail-label">Last Name</div>
-        <div class="detail-val" id="d-last">—</div>
-      </div>
-      <div class="detail-item">
-        <div class="detail-label">Gender</div>
-        <div class="detail-val" id="d-gender">—</div>
-      </div>
-      <div class="detail-item">
-        <div class="detail-label">Date of Birth</div>
-        <div class="detail-val" id="d-dob">—</div>
-      </div>
-      <div class="detail-item">
-        <div class="detail-label">Race Category</div>
-        <div class="detail-val" id="d-race">—</div>
-      </div>
-      <div class="detail-item">
-        <div class="detail-label">WhatsApp Number</div>
-        <div class="detail-val" id="d-phone">—</div>
-      </div>
-      <div class="detail-item">
-        <div class="detail-label">T-Shirt Size</div>
-        <div class="detail-val" id="d-tshirt">—</div>
-      </div>
+      <div class="detail-item"><div class="detail-label">First Name</div><div class="detail-val" id="d-first">—</div></div>
+      <div class="detail-item"><div class="detail-label">Last Name</div><div class="detail-val" id="d-last">—</div></div>
+      <div class="detail-item"><div class="detail-label">Gender</div><div class="detail-val" id="d-gender">—</div></div>
+      <div class="detail-item"><div class="detail-label">Date of Birth</div><div class="detail-val" id="d-dob">—</div></div>
+      <div class="detail-item"><div class="detail-label">Race Category</div><div class="detail-val" id="d-race">—</div></div>
+      <div class="detail-item"><div class="detail-label">WhatsApp Number</div><div class="detail-val" id="d-phone">—</div></div>
+      <div class="detail-item"><div class="detail-label">T-Shirt Size</div><div class="detail-val" id="d-tshirt">—</div></div>
+      <div class="detail-item"><div class="detail-label">Payment Breakdown</div><div class="detail-val" id="d-payinfo" style="color:var(--paid-text)">—</div></div>
+      <div class="detail-item"><div class="detail-label">BIB Handover Log</div><div class="detail-val" id="d-bibinfo" style="color:var(--blue-text)">—</div></div>
     </div>
-    
     <button class="modal-cancel-btn" onclick="closeDetailsModal()">Close</button>
   </div>
 </div>
 
 <script>
-// ════════════════════════════════════════════════════
-// CONFIGURATION — paste your values here
-// ════════════════════════════════════════════════════
 const MARATHON_NAME   = "Keeranalloor Marathon 2K26";
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxZNdeXxnSNBjcptxZMGi364S62DkAXZHkd4A1JxvaYSAw5ud--goSxrHUhbV0XjpHRbg/exec";
-// Paste the full /exec URL from Apps Script → Deploy → Manage deployments
-const REFRESH_MS = 300000; // 5 minutes
-// ════════════════════════════════════════════════════
+const REFRESH_MS = 300000;
 
 const COL = {
   FIRST:"First Name", LAST:"Last Name", GENDER:"Gender",
   RACE:"Race Category", PHONE:"WhatsApp Number", PAID:"Paid",
-  DOB:"Date of birth", TSHIRT:"T Shirts Size"
+  DOB:"Date of birth", TSHIRT:"T Shirts Size", 
+  PAYDETAILS:"Payment Log", BIBDETAILS:"BIB Handover Log", BIBNUM:"BIB No"
 };
 
-let runners=[], filter="all", cat="all", q="", cdSec, cdTimer, pending=null;
-let cbCounter = 0; // unique callback counter for JSONP
+let runners=[], filter="all", bibFilter="all", cat="all", q="", cdSec, cdTimer, pending=null, bibPending=null;
+let cbCounter = 0;
+let payMode = "", upiTarget = "", bibRec = "";
 
-// Set title
 (() => {
   const w=MARATHON_NAME.split(" "), last=w.pop();
   document.getElementById("title-el").innerHTML=w.join(" ")+" <span>"+last+"</span>";
   document.title=MARATHON_NAME+" — Registration Tracker";
 })();
 
-// ══════════════════════════════════════════════════════
-// JSONP helper — injects a <script> tag so there is
-// zero fetch() involved, bypassing all CORS restrictions
-// ══════════════════════════════════════════════════════
 function jsonp(url, params) {
   return new Promise((resolve, reject) => {
     const cbName = "__gasCallback" + (++cbCounter);
-    const timeout = setTimeout(() => {
-      cleanup();
-      reject(new Error("Request timed out. Check your Apps Script URL."));
-    }, 15000);
-
-    window[cbName] = function(data) {
-      cleanup();
-      resolve(data);
-    };
-
-    function cleanup() {
-      clearTimeout(timeout);
-      delete window[cbName];
-      const el = document.getElementById(cbName);
-      if (el) el.remove();
-    }
-
+    const timeout = setTimeout(() => { cleanup(); reject(new Error("Request timed out. Check Apps Script URL.")); }, 15000);
+    window[cbName] = function(data) { cleanup(); resolve(data); };
+    function cleanup() { clearTimeout(timeout); delete window[cbName]; const el = document.getElementById(cbName); if (el) el.remove(); }
     const allParams = Object.assign({ callback: cbName }, params);
-    const qs = Object.keys(allParams)
-      .map(k => encodeURIComponent(k) + "=" + encodeURIComponent(allParams[k]))
-      .join("&");
-
-    const script = document.createElement("script");
-    script.id  = cbName;
-    script.src = url + "?" + qs;
-    script.onerror = () => {
-      cleanup();
-      reject(new Error("Script load failed. Verify your Apps Script is deployed as 'Anyone' can access."));
-    };
+    const qs = Object.keys(allParams).map(k => encodeURIComponent(k) + "=" + encodeURIComponent(allParams[k])).join("&");
+    const script = document.createElement("script"); script.id = cbName; script.src = url + "?" + qs;
+    script.onerror = () => { cleanup(); reject(new Error("Script load failed. Check setup configurations.")); };
     document.head.appendChild(script);
   });
 }
 
-// ── FETCH DATA (read) ──
 async function fetchData() {
-  if (APPS_SCRIPT_URL === "YOUR_APPS_SCRIPT_WEB_APP_URL_HERE") { showConfig(); return; }
   try {
     const data = await jsonp(APPS_SCRIPT_URL, { action: "read" });
     if (data.error) throw new Error(data.error);
@@ -291,75 +315,64 @@ async function fetchData() {
     const el = document.getElementById("last-updated");
     el.setAttribute("data-base", base); el.textContent = base;
     resetCD();
-  } catch(e) {
-    showError(e.message);
-  }
+  } catch(e) { showError(e.message); }
 }
 
-// ── MARK PAID (via JSONP GET) ──
-async function callMarkPaid(rowIndex, password) {
-  return jsonp(APPS_SCRIPT_URL, { action: "markPaid", rowIndex, password });
-}
-
-// Helpers
 const extractKm = raw => {
   if (!raw) return "N/A";
-  const m = raw.match(/(\d+\.?\d*)\s*km?/i);
-  if (m) return m[1]+"KM";
-  const w = raw.match(/\b(half|full|3|5|10|21|42)\b/i);
-  if (!w) return raw.trim().substring(0,8);
+  const m = raw.match(/(\d+\.?\d*)\s*km?/i); if (m) return m[1]+"KM";
+  const w = raw.match(/\b(half|full|3|5|10|21|42)\b/i); if (!w) return raw.trim().substring(0,8);
   return ({half:"21KM",full:"42KM"})[w[1].toLowerCase()] || w[1]+"KM";
 };
 const isPaid = v => v && /^(yes|paid|true|1|y)$/i.test(String(v).trim());
-const ini    = (f,l) => ((f||"?")[0]+(l||"?")[0]).toUpperCase();
-const avCls  = g => { const v=(g||"").toLowerCase(); return v[0]==="f"?"avatar-f":v[0]==="m"?"avatar-m":"avatar-x"; };
-const esc    = s => String(s).replace(/\\/g,"\\\\").replace(/'/g,"\\'").replace(/"/g,"&quot;");
+const isBibHandedOver = v => v && String(v).trim() !== "" && !/^(no|false|0)$/i.test(String(v).trim());
+const esc = s => String(s).replace(/\\/g,"\\\\").replace(/'/g,"\\'").replace(/"/g,"&quot;");
 
-// Option B Date Formatting (e.g., "15 Dec 1995")
 function formatDate(rawDate) {
   if (!rawDate) return "—";
-  const d = new Date(rawDate);
-  if (isNaN(d.getTime())) return rawDate; // Fallback to raw if unparseable
-  const options = { day: 'numeric', month: 'short', year: 'numeric' };
-  return d.toLocaleDateString('en-US', options);
+  const d = new Date(rawDate); if (isNaN(d.getTime())) return rawDate;
+  return d.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
-// Toast
 let toastT;
 function toast(msg, type="success") {
-  const el=document.getElementById("toast");
-  el.textContent=msg; el.className="toast "+type+" show";
+  const el=document.getElementById("toast"); el.textContent=msg; el.className="toast "+type+" show";
   clearTimeout(toastT); toastT=setTimeout(()=>el.classList.remove("show"),3200);
 }
 
 function updateStats() {
   const p=runners.filter(r=>isPaid(r[COL.PAID])).length;
+  const b=runners.filter(r=>isBibHandedOver(r[COL.BIBDETAILS])).length;
   document.getElementById("s-total").textContent=runners.length;
   document.getElementById("s-paid").textContent=p;
   document.getElementById("s-unpaid").textContent=runners.length-p;
+  document.getElementById("s-bib").textContent=b + "/" + runners.length;
 }
 
 function buildCats() {
   const cats=[...new Set(runners.map(r=>extractKm(r[COL.RACE])))].filter(c=>c!=="N/A").sort((a,b)=>parseInt(a)-parseInt(b));
   cats.unshift("all");
   document.getElementById("cat-row").innerHTML=cats.map(c=>
-    `<button class="cat-btn ${c===cat?"active":""}" onclick="setCat('${c}')">
-      ${c==="all"?"All Distances":c}
-    </button>`).join("");
+    `<button class="cat-btn ${c===cat?"active":""}" onclick="setCat('${c}')">${c==="all"?"All Distances":c}</button>`).join("");
 }
 
 function setCat(c) {
   cat=c;
-  document.querySelectorAll(".cat-btn").forEach(b=>b.classList.toggle("active",
-    (c==="all"&&b.textContent.trim()==="All Distances")||b.textContent.trim()===c));
+  document.querySelectorAll(".cat-btn").forEach(b=>b.classList.toggle("active", (c==="all"&&b.textContent.trim()==="All Distances")||b.textContent.trim()===c));
   render();
 }
 
 function setFilter(f) {
   filter=f;
-  document.querySelectorAll(".filter-btn").forEach(b=>{
-    b.className="filter-btn";
-    if(b.dataset.f===f) b.classList.add("active-"+f);
+  document.querySelectorAll("[data-f]").forEach(b=>{ b.className="filter-btn"; if(b.dataset.f===f) b.classList.add("active-"+f); });
+  render();
+}
+
+function setBibFilter(b) {
+  bibFilter=b;
+  document.querySelectorAll("[data-b]").forEach(btn=>{
+    btn.className="filter-btn";
+    if(btn.dataset.b===b) btn.classList.add(b==='all' ? 'active-all' : b==='received' ? 'active-bib-rcv' : 'active-bib-pend');
   });
   render();
 }
@@ -368,39 +381,56 @@ function render() {
   const sq=q.toLowerCase().trim();
   const filtered=runners.filter(r=>{
     const name=((r[COL.FIRST]||"")+" "+(r[COL.LAST]||"")).toLowerCase();
-    const paid=isPaid(r[COL.PAID]), km=extractKm(r[COL.RACE]);
+    const paid=isPaid(r[COL.PAID]), km=extractKm(r[COL.RACE]), bibRcv=isBibHandedOver(r[COL.BIBDETAILS]);
     if(sq&&!name.includes(sq)) return false;
     if(filter==="paid"&&!paid) return false;
     if(filter==="unpaid"&&paid) return false;
+    if(bibFilter==="received"&&!bibRcv) return false;
+    if(bibFilter==="pending"&&bibRcv) return false;
     if(cat!=="all"&&km!==cat) return false;
     return true;
   });
-  document.getElementById("results-count").textContent=
-    filtered.length+" runner"+(filtered.length!==1?"s":"")+" shown";
+  
+  document.getElementById("results-count").textContent=filtered.length+" runner"+(filtered.length!==1?"s":"")+" shown";
   if(!filtered.length){
     document.getElementById("list").innerHTML=`
       <div class="state-box">
         <div class="state-icon">🔍</div>
         <div class="state-title">No runners found</div>
-        <div class="state-sub">Try adjusting your search or filter.</div>
+        <div class="state-sub">Try adjusting your filters.</div>
       </div>`; return;
   }
+  
   document.getElementById("list").innerHTML=filtered.map((r,i)=>{
     const first=r[COL.FIRST]||"", last=r[COL.LAST]||"";
-    const km=extractKm(r[COL.RACE]), paid=isPaid(r[COL.PAID]), phone=r[COL.PHONE]||"", ri=r.__rowIndex;
+    const km=extractKm(r[COL.RACE]), paid=isPaid(r[COL.PAID]), bibRcv=isBibHandedOver(r[COL.BIBDETAILS]), phone=r[COL.PHONE]||"", ri=r.__rowIndex;
+    const bibNo=r[COL.BIBNUM] ? String(r[COL.BIBNUM]).trim() : "";
+    
+    // Auto incremental Serial Number
+    const displaySN = i + 1; 
+
     return `
       <div class="runner-card" style="animation-delay:${Math.min(i*18,240)}ms">
-        <div class="runner-avatar ${avCls(r[COL.GENDER])}" onclick="openDetailsModal(${ri})">${ini(first,last)}</div>
+        <div class="runner-sn">${displaySN}</div>
         <div class="runner-info" onclick="openDetailsModal(${ri})">
-          <div class="runner-name">${first} ${last}</div>
+          <div class="runner-name-row">
+            <div class="runner-name">${first} ${last}</div>
+            ${bibNo ? `<span class="bib-tag">BIB: ${bibNo}</span>` : ""}
+          </div>
           <div class="runner-meta">
             <span class="race-badge">${km}</span>
             ${phone?`<span class="runner-num">${phone}</span>`:""}
           </div>
         </div>
         <div class="runner-right">
-          <span class="fee-badge ${paid?"fee-paid":"fee-unpaid"}">${paid?"Paid":"Unpaid"}</span>
-          ${!paid?`<button class="mark-btn" onclick="openModal(${ri},'${esc(first+" "+last)}','${esc(km)}')">✓ Mark Paid</button>`:""}
+          <div class="badgelist">
+            <span class="fee-badge ${paid?"fee-paid":"fee-unpaid"}">${paid?"Paid":"Unpaid"}</span>
+            ${bibRcv ? `<span class="fee-badge fee-bib">BIB Out</span>`: ""}
+          </div>
+          <div class="action-buttons">
+            ${!paid?`<button class="mark-btn" onclick="openModal(${ri},'${esc(first+" "+last)}','${esc(km)}')">✓ Paid</button>`:""}
+            ${!bibRcv?`<button class="mark-btn bib-action" onclick="openBibModal(${ri},'${esc(first+" "+last)}','${esc(km)}')">📦 Kit</button>`:""}
+          </div>
         </div>
       </div>`;
   }).join("");
@@ -408,18 +438,14 @@ function render() {
 
 document.getElementById("search-input").addEventListener("input",function(){q=this.value;render();});
 
-// Details Modal Handlers
+// Details View Modal
 function openDetailsModal(rowIndex) {
-  const r = runners.find(runner => runner.__rowIndex === rowIndex);
-  if (!r) return;
-
-  const first = r[COL.FIRST] || "—";
-  const last = r[COL.LAST] || "—";
+  const r = runners.find(runner => runner.__rowIndex === rowIndex); if (!r) return;
+  const first = r[COL.FIRST] || "—", last = r[COL.LAST] || "—";
   const paid = isPaid(r[COL.PAID]) ? "Paid" : "Unpaid";
 
   document.getElementById("d-name").textContent = first + " " + last;
   document.getElementById("d-meta").textContent = extractKm(r[COL.RACE]) + " · " + paid;
-  
   document.getElementById("d-first").textContent = first;
   document.getElementById("d-last").textContent = last;
   document.getElementById("d-gender").textContent = r[COL.GENDER] || "—";
@@ -427,89 +453,150 @@ function openDetailsModal(rowIndex) {
   document.getElementById("d-race").textContent = r[COL.RACE] || "—";
   document.getElementById("d-phone").textContent = r[COL.PHONE] || "—";
   document.getElementById("d-tshirt").textContent = r[COL.TSHIRT] || "—";
+  document.getElementById("d-payinfo").textContent = r[COL.PAYDETAILS] || "Not customized / Auto recorded";
+  document.getElementById("d-bibinfo").textContent = r[COL.BIBDETAILS] || "Pending Handover";
 
   document.getElementById("details-modal").style.display = "flex";
 }
+function closeDetailsModal() { document.getElementById("details-modal").style.display = "none"; }
 
-function closeDetailsModal() {
-  document.getElementById("details-modal").style.display = "none";
+// Pay Modal Conditional Helpers
+function selectPayMode(mode) {
+  payMode = mode;
+  document.getElementById("opt-cash").classList.toggle("selected", mode==="Cash");
+  document.getElementById("opt-upi").classList.toggle("selected", mode==="UPI");
+  document.getElementById("block-cash").classList.toggle("show", mode==="Cash");
+  document.getElementById("block-upi").classList.toggle("show", mode==="UPI");
+}
+function selectUpiTarget(target) {
+  upiTarget = target;
+  document.getElementById("opt-org").classList.toggle("selected", target==="Organizer");
+  document.getElementById("opt-coord").classList.toggle("selected", target==="Coordinator");
+  document.getElementById("block-upi-ref").classList.toggle("show", target==="Coordinator");
 }
 
-// Payment Confirmation Handlers
 function openModal(rowIndex,name,km){
-  pending={rowIndex,name,km};
+  pending={rowIndex,name,km}; payMode = ""; upiTarget = "";
   document.getElementById("m-name").textContent=name;
   document.getElementById("m-meta").textContent=km+" · Unpaid";
   document.getElementById("m-pw").value="";
+  document.getElementById("m-cash-to").value="";
+  document.getElementById("m-upi-ref").value="";
   document.getElementById("m-err").className="modal-error";
   document.getElementById("m-btn").disabled=false;
-  document.getElementById("m-btn").textContent="✓ Mark as Paid";
+  document.getElementById("opt-cash").classList.remove("selected");
+  document.getElementById("opt-upi").classList.remove("selected");
+  document.getElementById("opt-org").classList.remove("selected");
+  document.getElementById("opt-coord").classList.remove("selected");
+  document.getElementById("block-cash").classList.remove("show");
+  document.getElementById("block-upi").classList.remove("show");
+  document.getElementById("block-upi-ref").classList.remove("show");
   document.getElementById("modal").style.display="flex";
   setTimeout(()=>document.getElementById("m-pw").focus(),300);
 }
-
-function closeModal(){
-  document.getElementById("modal").style.display="none";
-  pending=null;
-}
+function closeModal(){ document.getElementById("modal").style.display="none"; pending=null; }
 
 async function confirmPaid(){
   if(!pending) return;
+  if(!payMode){ setModalErr("Please choose Cash or UPI payment mode."); return; }
+  
+  let dynamicValue = "";
+  if(payMode === "Cash") {
+    const person = document.getElementById("m-cash-to").value.trim();
+    if(!person) { setModalErr("Please input the name of the person handed-over."); return; }
+    dynamicValue = "Cash > " + person;
+  } else {
+    if(!upiTarget) { setModalErr("Please choose recipient: Organizer or Coordinator."); return; }
+    if(upiTarget === "Coordinator") {
+      const ref = document.getElementById("m-upi-ref").value.trim();
+      if(!ref) { setModalErr("Please enter the UPI transaction reference ID."); return; }
+      dynamicValue = "UPI > Coordinator > " + ref;
+    } else { dynamicValue = "UPI > Organizer"; }
+  }
+
   const pw=document.getElementById("m-pw").value;
   if(!pw){setModalErr("Please enter the admin password.");return;}
+  
   const btn=document.getElementById("m-btn");
   btn.disabled=true; btn.textContent="Updating…";
   try {
-    const data=await callMarkPaid(pending.rowIndex, pw);
-    if(data.error) throw new Error(data.error);
+    const data = await jsonp(APPS_SCRIPT_URL, { action: "markPaid", rowIndex: pending.rowIndex, password: pw, customPayload: dynamicValue });
+    if (data.error) throw new Error(data.error);
     const r=runners.find(r=>r.__rowIndex===pending.rowIndex);
-    if(r) r[COL.PAID]="Yes";
-    updateStats(); render();
-    const name=pending.name; closeModal();
-    toast("✓ "+name+" marked as Paid");
+    if(r) { r[COL.PAID]="Yes"; r[COL.PAYDETAILS] = dynamicValue; }
+    updateStats(); render(); closeModal();
+    toast("✓ Payment logged successfully!");
   } catch(e){
-    btn.disabled=false; btn.textContent="✓ Mark as Paid";
+    btn.disabled=false; btn.textContent="✓ Submit Payment";
     setModalErr(e.message==="Incorrect password"?"Incorrect password. Try again.":"Error: "+e.message);
   }
 }
+function setModalErr(msg){ const el=document.getElementById("m-err"); el.textContent=msg; el.className="modal-error show"; }
 
-function setModalErr(msg){
-  const el=document.getElementById("m-err");
-  el.textContent=msg; el.className="modal-error show";
+// BIB Modal Conditional Helpers
+function selectBibRec(rec) {
+  bibRec = rec;
+  document.getElementById("opt-run").classList.toggle("selected", rec==="Runner");
+  document.getElementById("opt-msg").classList.toggle("selected", rec==="Messenger");
+  document.getElementById("block-msg").classList.toggle("show", rec==="Messenger");
 }
+function openBibModal(rowIndex, name, km) {
+  bibPending = { rowIndex, name, km }; bibRec = "";
+  document.getElementById("bm-name").textContent=name;
+  document.getElementById("bm-meta").textContent=km+" · BIB Delivery Logs";
+  document.getElementById("bm-pw").value="";
+  document.getElementById("bm-msg-name").value="";
+  document.getElementById("bm-err").className="modal-error";
+  document.getElementById("bm-btn").disabled=false;
+  document.getElementById("opt-run").classList.remove("selected");
+  document.getElementById("opt-msg").classList.remove("selected");
+  document.getElementById("block-msg").classList.remove("show");
+  document.getElementById("bib-modal").style.display="flex";
+  setTimeout(()=>document.getElementById("bm-pw").focus(),300);
+}
+function closeBibModal() { document.getElementById("bib-modal").style.display="none"; bibPending=null; }
+
+async function confirmBibHandover() {
+  if(!bibPending) return;
+  if(!bibRec) { setBibModalErr("Please select recipient: Runner or Messenger."); return; }
+  
+  let bibValue = "";
+  if(bibRec === "Runner") { bibValue = "1) Runner"; } 
+  else {
+    const messenger = document.getElementById("bm-msg-name").value.trim();
+    if(!messenger) { setBibModalErr("Please specify Messenger's name."); return; }
+    bibValue = "2) " + messenger;
+  }
+  
+  const pw=document.getElementById("bm-pw").value;
+  if(!pw){setBibModalErr("Please enter the admin password.");return;}
+  
+  const btn=document.getElementById("bm-btn");
+  btn.disabled=true; btn.textContent="Processing…";
+  try {
+    const data = await jsonp(APPS_SCRIPT_URL, { action: "markBibHandover", rowIndex: bibPending.rowIndex, password: pw, customPayload: bibValue });
+    if (data.error) throw new Error(data.error);
+    const r=runners.find(r=>r.__rowIndex===bibPending.rowIndex);
+    if(r) { r[COL.BIBDETAILS] = bibValue; }
+    updateStats(); render(); Amusement = closeBibModal();
+    toast("📦 BIB Kit delivery saved.");
+  } catch(e) {
+    btn.disabled=false; btn.textContent="✓ Confirm Handover";
+    setBibModalErr(e.message==="Incorrect password"?"Incorrect password. Try again.":"Error: "+e.message);
+  }
+}
+function setBibModalErr(msg){ const el=document.getElementById("bm-err"); el.textContent=msg; el.className="modal-error show"; }
 
 function resetCD(){
   clearInterval(cdTimer); cdSec=REFRESH_MS/1000;
   cdTimer=setInterval(()=>{
-    cdSec--;
-    const el=document.getElementById("last-updated");
-    const base=el.getAttribute("data-base")||"";
+    cdSec--; const el=document.getElementById("last-updated"); const base=el.getAttribute("data-base")||"";
     el.textContent=base+" · Next: "+Math.floor(cdSec/60)+":"+String(cdSec%60).padStart(2,"0");
     if(cdSec<=0) fetchData();
   },1000);
 }
-
-function showConfig(){
-  document.getElementById("list").innerHTML=`
-    <div class="config-banner">
-      <strong>⚙️ Setup Required</strong>
-      Open this file and set <code>APPS_SCRIPT_URL</code> to your deployed Web App URL.
-    </div>`;
-  ["s-total","s-paid","s-unpaid"].forEach(id=>document.getElementById(id).textContent="—");
-}
-
 function showError(msg){
-  document.getElementById("list").innerHTML=`
-    <div class="error-card">
-      <strong>Could not load data</strong>
-      ${msg}
-      <br><br>
-      <strong>Checklist:</strong><br>
-      1. Apps Script → Deploy → Manage deployments → confirm <em>Who has access = Anyone</em><br>
-      2. The URL in index.html ends with <code>/exec</code> (not <code>/dev</code>)<br>
-      3. You clicked <em>Authorize access</em> when first deploying<br>
-      4. Try opening the URL directly in a browser tab — you should see JSON text
-    </div>`;
+  document.getElementById("list").innerHTML=`<div class="error-card"><strong>Could not sync data connection</strong>${msg}</div>`;
 }
 
 fetchData();
