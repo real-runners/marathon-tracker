@@ -229,8 +229,8 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:2
       <div class="detail-item"><div class="detail-label">Race Category</div><div class="detail-val" id="d-race">—</div></div>
       <div class="detail-item"><div class="detail-label">WhatsApp Number</div><div class="detail-val" id="d-phone">—</div></div>
       <div class="detail-item"><div class="detail-label">T-Shirt Size</div><div class="detail-val" id="d-tshirt">—</div></div>
-      <div class="detail-item"><div class="detail-label">Payment Details</div><div class="detail-val" id="d-paym">—</div></div>
-      <div class="detail-item"><div class="detail-label">BIB Kit Status</div><div class="detail-val" id="d-bibm">—</div></div>
+      <div class="detail-item"><div class="detail-label">Payment Details (Mode)</div><div class="detail-val" id="d-paym">—</div></div>
+      <div class="detail-item"><div class="detail-label">BIB Kit Status (Kit Delivered)</div><div class="detail-val" id="d-bibm">—</div></div>
     </div>
     <button class="modal-cancel-btn" onclick="closeDetailsModal()">Close</button>
   </div>
@@ -241,10 +241,17 @@ const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwAV_NR9ZIf9EGk
 const REFRESH_MS = 300000;
 
 const COL = {
-  FIRST:"First Name", LAST:"Last Name", GENDER:"Gender",
-  RACE:"Race Category", PHONE:"WhatsApp Number", PAID:"Paid",
-  DOB:"Date of birth", TSHIRT:"T Shirts Size",
-  PAY_DETAILS:"Payment Details", BIB_HANDOVER:"BIB Kit Status", BIB_NO:"BIB No"
+  FIRST: "First Name",
+  LAST: "Last Name",
+  GENDER: "Gender",
+  RACE: "Race Category",
+  PHONE: "WhatsApp Number",
+  PAID: "Paid",
+  DOB: "Date of birth",
+  TSHIRT: "T Shirts Size",
+  PAY_DETAILS: "Mode",
+  BIB_HANDOVER: "Kit Delivered",
+  BIB_NO: "BIB No"
 };
 
 let runners=[], payFilter="all", bibFilter="all", cat="all", q="", pendingPay=null, pendingBib=null;
@@ -292,20 +299,19 @@ function jsonp(url, params) {
   });
 }
 
-// Helper to look up values regardless of slight header naming variations
 function getFieldValue(r, keys) {
+  if (!r) return "";
   for (let k of keys) {
     if (r[k] !== undefined && r[k] !== null && String(r[k]).trim() !== "") {
-      return r[k];
+      return String(r[k]).trim();
     }
   }
-  // Try case-insensitive fuzzy check across object keys
   const rKeys = Object.keys(r);
   for (let k of keys) {
     const lowerK = k.toLowerCase();
     const foundKey = rKeys.find(rk => rk.toLowerCase().includes(lowerK));
     if (foundKey && r[foundKey] !== undefined && r[foundKey] !== null && String(r[foundKey]).trim() !== "") {
-      return r[foundKey];
+      return String(r[foundKey]).trim();
     }
   }
   return "";
@@ -344,7 +350,7 @@ const esc = s => String(s).replace(/'/g,"\\'").replace(/"/g,"&quot;");
 
 function updateStats() {
   const p = runners.filter(r => isPaid(getFieldValue(r, ["Paid", "paid"]))).length;
-  const b = runners.filter(r => isBibReceived(getFieldValue(r, ["BIB Kit Status", "BIB Kit Details", "BIB Status", "Col O", "BIB Kit String (Col O)"]))).length;
+  const b = runners.filter(r => isBibReceived(getFieldValue(r, ["Kit Delivered", "BIB Kit Status", "BIB Status"]))).length;
   document.getElementById("s-total").textContent = runners.length;
   document.getElementById("s-paid").textContent = p;
   document.getElementById("s-unpaid").textContent = runners.length - p;
@@ -382,12 +388,11 @@ function render() {
     const paidVal = getFieldValue(r, [COL.PAID, "Paid"]);
     const paid = isPaid(paidVal);
     
-    const bibVal = getFieldValue(r, [COL.BIB_HANDOVER, "BIB Kit Status", "BIB Kit Details", "BIB Status"]);
+    const bibVal = getFieldValue(r, [COL.BIB_HANDOVER, "Kit Delivered", "BIB Kit Status"]);
     const bibDone = isBibReceived(bibVal);
     
     const km = extractKm(getFieldValue(r, [COL.RACE, "Race Category"]));
 
-    // Search by Name OR WhatsApp Number
     if (sq && !name.includes(sq) && !phone.includes(sq)) return false;
     
     if (payFilter === "paid" && !paid) return false;
@@ -409,7 +414,7 @@ function render() {
     const km = extractKm(getFieldValue(r, [COL.RACE, "Race Category"]));
     const paidVal = getFieldValue(r, [COL.PAID, "Paid"]);
     const paid = isPaid(paidVal);
-    const bibVal = getFieldValue(r, [COL.BIB_HANDOVER, "BIB Kit Status", "BIB Kit Details"]);
+    const bibVal = getFieldValue(r, [COL.BIB_HANDOVER, "Kit Delivered", "BIB Kit Status"]);
     const bibDone = isBibReceived(bibVal);
     const bibNo = getFieldValue(r, [COL.BIB_NO, "BIB No"]);
     const phone = getFieldValue(r, [COL.PHONE, "WhatsApp Number"]);
@@ -589,11 +594,11 @@ function openDetailsModal(rowIndex) {
   const phone = getFieldValue(r, [COL.PHONE, "WhatsApp Number", "Phone"]);
   const tshirt = getFieldValue(r, [COL.TSHIRT, "T Shirts Size", "T-Shirt Size"]);
   
-  // Payment String (Column M / Payment Details)
-  const paym = getFieldValue(r, ["Payment Details", "Payment String", "Col M", "Payment Details (Col M)"]);
+  // Column M / Mode
+  const paym = getFieldValue(r, ["Mode", "Payment Details", "Payment String"]);
   
-  // BIB Kit String (Column O / BIB Kit Status)
-  const bibm = getFieldValue(r, ["BIB Kit Status", "BIB Kit Details", "Col O", "BIB Kit String (Col O)"]);
+  // Column O / Kit Delivered
+  const bibm = getFieldValue(r, ["Kit Delivered", "BIB Kit Status", "BIB Kit Details"]);
 
   document.getElementById("d-name").textContent = (first + " " + last).trim() || "Runner Profile";
   document.getElementById("d-meta").textContent = extractKm(race);
