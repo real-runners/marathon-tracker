@@ -127,7 +127,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:2
   <div class="filter-row">
     <div class="search-wrap">
       <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-      <input class="search-input" id="search-input" placeholder="Search by name..." type="search"/>
+      <input class="search-input" id="search-input" placeholder="Search by name or WhatsApp number..." type="search"/>
     </div>
     <div class="filter-group">
       <button class="filter-btn active" data-pay="all" onclick="setPayFilter('all')">All Pay</button>
@@ -229,8 +229,8 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:2
       <div class="detail-item"><div class="detail-label">Race Category</div><div class="detail-val" id="d-race">—</div></div>
       <div class="detail-item"><div class="detail-label">WhatsApp Number</div><div class="detail-val" id="d-phone">—</div></div>
       <div class="detail-item"><div class="detail-label">T-Shirt Size</div><div class="detail-val" id="d-tshirt">—</div></div>
-      <div class="detail-item"><div class="detail-label">Payment String (Col M)</div><div class="detail-val" id="d-paym">—</div></div>
-      <div class="detail-item"><div class="detail-label">BIB Kit String (Col O)</div><div class="detail-val" id="d-bibm">—</div></div>
+      <div class="detail-item"><div class="detail-label">Payment Details</div><div class="detail-val" id="d-paym">—</div></div>
+      <div class="detail-item"><div class="detail-label">BIB Kit Status</div><div class="detail-val" id="d-bibm">—</div></div>
     </div>
     <button class="modal-cancel-btn" onclick="closeDetailsModal()">Close</button>
   </div>
@@ -292,6 +292,25 @@ function jsonp(url, params) {
   });
 }
 
+// Helper to look up values regardless of slight header naming variations
+function getFieldValue(r, keys) {
+  for (let k of keys) {
+    if (r[k] !== undefined && r[k] !== null && String(r[k]).trim() !== "") {
+      return r[k];
+    }
+  }
+  // Try case-insensitive fuzzy check across object keys
+  const rKeys = Object.keys(r);
+  for (let k of keys) {
+    const lowerK = k.toLowerCase();
+    const foundKey = rKeys.find(rk => rk.toLowerCase().includes(lowerK));
+    if (foundKey && r[foundKey] !== undefined && r[foundKey] !== null && String(r[foundKey]).trim() !== "") {
+      return r[foundKey];
+    }
+  }
+  return "";
+}
+
 async function fetchData() {
   try {
     const params = { action: "read" };
@@ -324,8 +343,8 @@ const extractKm = raw => {
 const esc = s => String(s).replace(/'/g,"\\'").replace(/"/g,"&quot;");
 
 function updateStats() {
-  const p = runners.filter(r => isPaid(r[COL.PAID])).length;
-  const b = runners.filter(r => isBibReceived(r[COL.BIB_HANDOVER])).length;
+  const p = runners.filter(r => isPaid(getFieldValue(r, ["Paid", "paid"]))).length;
+  const b = runners.filter(r => isBibReceived(getFieldValue(r, ["BIB Kit Status", "BIB Kit Details", "BIB Status", "Col O", "BIB Kit String (Col O)"]))).length;
   document.getElementById("s-total").textContent = runners.length;
   document.getElementById("s-paid").textContent = p;
   document.getElementById("s-unpaid").textContent = runners.length - p;
@@ -333,7 +352,7 @@ function updateStats() {
 }
 
 function buildCats() {
-  const cats = [...new Set(runners.map(r => extractKm(r[COL.RACE])))].filter(c => c !== "N/A");
+  const cats = [...new Set(runners.map(r => extractKm(getFieldValue(r, [COL.RACE, "Race Category"]))))].filter(c => c !== "N/A");
   cats.unshift("all");
   document.getElementById("cat-row").innerHTML = cats.map(c =>
     `<button class="cat-btn ${c===cat?"active":""}" onclick="setCat('${c}')">${c==="all"?"All Distances":c}</button>`
@@ -355,12 +374,22 @@ function setBibFilter(f) {
 function render() {
   const sq = q.toLowerCase().trim();
   const filtered = runners.filter(r => {
-    const name = ((r[COL.FIRST]||"")+" "+(r[COL.LAST]||"")).toLowerCase();
-    const paid = isPaid(r[COL.PAID]);
-    const bibDone = isBibReceived(r[COL.BIB_HANDOVER]);
-    const km = extractKm(r[COL.RACE]);
+    const first = getFieldValue(r, [COL.FIRST, "First Name"]);
+    const last = getFieldValue(r, [COL.LAST, "Last Name"]);
+    const name = (first + " " + last).toLowerCase();
+    const phone = String(getFieldValue(r, [COL.PHONE, "WhatsApp Number", "Phone"])).toLowerCase();
+    
+    const paidVal = getFieldValue(r, [COL.PAID, "Paid"]);
+    const paid = isPaid(paidVal);
+    
+    const bibVal = getFieldValue(r, [COL.BIB_HANDOVER, "BIB Kit Status", "BIB Kit Details", "BIB Status"]);
+    const bibDone = isBibReceived(bibVal);
+    
+    const km = extractKm(getFieldValue(r, [COL.RACE, "Race Category"]));
 
-    if (sq && !name.includes(sq)) return false;
+    // Search by Name OR WhatsApp Number
+    if (sq && !name.includes(sq) && !phone.includes(sq)) return false;
+    
     if (payFilter === "paid" && !paid) return false;
     if (payFilter === "unpaid" && paid) return false;
     if (bibFilter === "received" && !bibDone) return false;
@@ -375,11 +404,16 @@ function render() {
   }
 
   document.getElementById("list").innerHTML = filtered.map((r, i) => {
-    const first = r[COL.FIRST]||"", last = r[COL.LAST]||"";
-    const km = extractKm(r[COL.RACE]), paid = isPaid(r[COL.PAID]);
-    const bibDone = isBibReceived(r[COL.BIB_HANDOVER]);
-    const bibNo = r[COL.BIB_NO] || "";
-    const phone = r[COL.PHONE]||"", ri = r.__rowIndex;
+    const first = getFieldValue(r, [COL.FIRST, "First Name"]);
+    const last = getFieldValue(r, [COL.LAST, "Last Name"]);
+    const km = extractKm(getFieldValue(r, [COL.RACE, "Race Category"]));
+    const paidVal = getFieldValue(r, [COL.PAID, "Paid"]);
+    const paid = isPaid(paidVal);
+    const bibVal = getFieldValue(r, [COL.BIB_HANDOVER, "BIB Kit Status", "BIB Kit Details"]);
+    const bibDone = isBibReceived(bibVal);
+    const bibNo = getFieldValue(r, [COL.BIB_NO, "BIB No"]);
+    const phone = getFieldValue(r, [COL.PHONE, "WhatsApp Number"]);
+    const ri = r.__rowIndex;
 
     return `
       <div class="runner-card">
@@ -391,7 +425,7 @@ function render() {
           </div>
           <div class="runner-meta">
             <span class="race-badge">${km}</span>
-            ${phone ? `<span class="runner-num">${phone}</span>` : ""}
+            ${phone ? `<span class="runner-num">📱 ${phone}</span>` : ""}
           </div>
         </div>
         <div class="runner-right">
@@ -485,9 +519,7 @@ async function confirmPayment() {
       details: detailsStr
     });
     if (res.error) throw new Error(res.error);
-    const r = runners.find(x => x.__rowIndex === pendingPay.rowIndex);
-    if (r) { r[COL.PAID] = "Yes"; r[COL.PAY_DETAILS] = detailsStr; }
-    updateStats(); render(); closePayModal();
+    fetchData(); closePayModal();
     toast("Payment saved successfully!");
   } catch(e) { setPayErr(e.message); }
 }
@@ -537,9 +569,7 @@ async function confirmBibHandover() {
       handoverData: handoverStr
     });
     if (res.error) throw new Error(res.error);
-    const r = runners.find(x => x.__rowIndex === pendingBib.rowIndex);
-    if (r) { r[COL.BIB_HANDOVER] = handoverStr; }
-    updateStats(); render(); closeBibModal();
+    fetchData(); closeBibModal();
     toast("BIB Kit Handover recorded!");
   } catch(e) { setBibErr(e.message); }
 }
@@ -549,18 +579,34 @@ function setBibErr(msg) { const el = document.getElementById("b-err"); el.textCo
 function openDetailsModal(rowIndex) {
   const r = runners.find(x => x.__rowIndex === rowIndex);
   if (!r) return;
-  document.getElementById("d-name").textContent = (r[COL.FIRST]||"") + " " + (r[COL.LAST]||"");
-  document.getElementById("d-meta").textContent = extractKm(r[COL.RACE]);
-  document.getElementById("d-first").textContent = r[COL.FIRST] || "—";
-  document.getElementById("d-last").textContent = r[COL.LAST] || "—";
-  document.getElementById("d-bibno").textContent = r[COL.BIB_NO] || "Not assigned yet";
-  document.getElementById("d-gender").textContent = r[COL.GENDER] || "—";
-  document.getElementById("d-dob").textContent = r[COL.DOB] || "—";
-  document.getElementById("d-race").textContent = r[COL.RACE] || "—";
-  document.getElementById("d-phone").textContent = r[COL.PHONE] || "—";
-  document.getElementById("d-tshirt").textContent = r[COL.TSHIRT] || "—";
-  document.getElementById("d-paym").textContent = r[COL.PAY_DETAILS] || "—";
-  document.getElementById("d-bibm").textContent = r[COL.BIB_HANDOVER] || "—";
+  
+  const first = getFieldValue(r, [COL.FIRST, "First Name"]);
+  const last = getFieldValue(r, [COL.LAST, "Last Name"]);
+  const race = getFieldValue(r, [COL.RACE, "Race Category"]);
+  const bibno = getFieldValue(r, [COL.BIB_NO, "BIB No"]);
+  const gender = getFieldValue(r, [COL.GENDER, "Gender"]);
+  const dob = getFieldValue(r, [COL.DOB, "Date of birth", "DOB"]);
+  const phone = getFieldValue(r, [COL.PHONE, "WhatsApp Number", "Phone"]);
+  const tshirt = getFieldValue(r, [COL.TSHIRT, "T Shirts Size", "T-Shirt Size"]);
+  
+  // Payment String (Column M / Payment Details)
+  const paym = getFieldValue(r, ["Payment Details", "Payment String", "Col M", "Payment Details (Col M)"]);
+  
+  // BIB Kit String (Column O / BIB Kit Status)
+  const bibm = getFieldValue(r, ["BIB Kit Status", "BIB Kit Details", "Col O", "BIB Kit String (Col O)"]);
+
+  document.getElementById("d-name").textContent = (first + " " + last).trim() || "Runner Profile";
+  document.getElementById("d-meta").textContent = extractKm(race);
+  document.getElementById("d-first").textContent = first || "—";
+  document.getElementById("d-last").textContent = last || "—";
+  document.getElementById("d-bibno").textContent = bibno || "Not assigned yet";
+  document.getElementById("d-gender").textContent = gender || "—";
+  document.getElementById("d-dob").textContent = dob || "—";
+  document.getElementById("d-race").textContent = race || "—";
+  document.getElementById("d-phone").textContent = phone || "—";
+  document.getElementById("d-tshirt").textContent = tshirt || "—";
+  document.getElementById("d-paym").textContent = paym || "—";
+  document.getElementById("d-bibm").textContent = bibm || "—";
   document.getElementById("details-modal").style.display = "flex";
 }
 function closeDetailsModal() { document.getElementById("details-modal").style.display = "none"; }
