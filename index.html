@@ -18,14 +18,14 @@
 body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased}
 header{background:var(--surface);border-bottom:1px solid var(--border);padding:20px 16px 16px;position:sticky;top:0;z-index:100}
 .header-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:16px}
+.title-wrap{display:flex;flex-direction:column;gap:4px}
 .marathon-title{font-family:var(--font-d);font-size:clamp(18px,5.5vw,24px);font-weight:800;letter-spacing:-.3px;line-height:1.1;text-transform:uppercase}
 .marathon-title span{color:var(--accent)}
+.event-select{background:var(--surface2);border:1px solid var(--border2);color:var(--accent);font-family:var(--font-d);font-size:14px;font-weight:700;padding:4px 8px;border-radius:6px;outline:none;cursor:pointer;margin-top:4px}
 .header-right{display:flex;align-items:center;gap:10px}
 .live-badge{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);white-space:nowrap}
 .live-dot{width:7px;height:7px;border-radius:50%;background:#4ade80;animation:pulse 2s ease-in-out infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
-.settings-icon-btn{background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:5px 8px;font-size:14px;cursor:pointer;transition:all .2s}
-.settings-icon-btn:hover{color:var(--text);border-color:var(--border2)}
 
 .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px}
 .stat-card{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 8px;text-align:center}
@@ -110,10 +110,12 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:2
 
 <header>
   <div class="header-top">
-    <div class="marathon-title" id="title-el">Loading<span>…</span></div>
+    <div class="title-wrap">
+      <div class="marathon-title" id="title-el">Loading<span>…</span></div>
+      <div id="event-select-container"></div>
+    </div>
     <div class="header-right">
       <div class="live-badge"><div class="live-dot"></div> Live</div>
-      <button class="settings-icon-btn" onclick="openSettingsModal()" title="App Settings">⚙</button>
     </div>
   </div>
   <div class="stats-row">
@@ -147,31 +149,6 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:2
 <div class="refresh-bar">
   <span id="last-updated">Not yet loaded</span>
   <button class="refresh-btn" onclick="fetchData()">↻ Refresh</button>
-</div>
-
-<!-- MASTER SETTINGS MODAL -->
-<div class="modal-overlay" id="settings-modal" style="display:none" onclick="if(event.target===this)closeSettingsModal()">
-  <div class="modal-sheet">
-    <div class="modal-handle"></div>
-    <div class="modal-runner-name">⚙ App Master Config</div>
-    <div class="modal-sub">Switch active event centrally across all devices</div>
-
-    <div class="modal-label">Marathon Name</div>
-    <input class="modal-input" id="cfg-mname" type="text" placeholder="e.g. Wandoor Marathon" />
-
-    <div class="modal-label">Spreadsheet ID</div>
-    <input class="modal-input" id="cfg-ssid" type="text" placeholder="Spreadsheet ID from Google Sheet URL" />
-
-    <div class="modal-label">Apps Script URL</div>
-    <input class="modal-input" id="cfg-url" type="text" placeholder="https://script.google.com/macros/s/.../exec" />
-
-    <div class="modal-label">Master Password</div>
-    <input class="modal-input" id="cfg-pw" type="password" placeholder="••••••••" />
-    <div class="modal-error" id="cfg-err"></div>
-
-    <button class="modal-confirm-btn" onclick="saveMasterConfig()">✓ Save & Sync All Devices</button>
-    <button class="modal-cancel-btn" onclick="closeSettingsModal()">Cancel</button>
-  </div>
 </div>
 
 <!-- PAYMENT MODAL -->
@@ -258,7 +235,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:2
 </div>
 
 <script>
-let APPS_SCRIPT_URL = localStorage.getItem("master_apps_script_url") || "https://script.google.com/macros/s/AKfycbwAV_NR9ZIf9EGko2W8vWkP4WumdgtHU7yWo0eoQTmavGfBeVbyNvb6gVzRfU6WQBi3/exec";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwAV_NR9ZIf9EGko2W8vWkP4WumdgtHU7yWo0eoQTmavGfBeVbyNvb6gVzRfU6WQBi3/exec";
 const REFRESH_MS = 300000;
 
 const COL = {
@@ -271,11 +248,31 @@ const COL = {
 let runners=[], payFilter="all", bibFilter="all", cat="all", q="", pendingPay=null, pendingBib=null;
 let payMethod="", upiSub="", bibTarget="";
 let cbCounter = 0;
+let activeMarathons = [];
+let currentMarathonId = "";
 
 function setTitle(name) {
   const w = (name || "Marathon Tracker").split(" "), last = w.pop();
   document.getElementById("title-el").innerHTML = w.join(" ") + " <span>" + last + "</span>";
   document.title = name + " — Registration Tracker";
+}
+
+function renderEventSelector() {
+  const container = document.getElementById("event-select-container");
+  if (activeMarathons.length > 1) {
+    container.innerHTML = `
+      <select class="event-select" onchange="switchMarathon(this.value)">
+        ${activeMarathons.map(m => `<option value="${m.id}" ${m.id === currentMarathonId ? "selected" : ""}>▾ Switch Event: ${m.name}</option>`).join("")}
+      </select>
+    `;
+  } else {
+    container.innerHTML = "";
+  }
+}
+
+function switchMarathon(mId) {
+  currentMarathonId = mId;
+  fetchData();
 }
 
 function jsonp(url, params) {
@@ -295,9 +292,19 @@ function jsonp(url, params) {
 
 async function fetchData() {
   try {
-    const data = await jsonp(APPS_SCRIPT_URL, { action: "read" });
+    const params = { action: "read" };
+    if (currentMarathonId) params.marathonId = currentMarathonId;
+
+    const data = await jsonp(APPS_SCRIPT_URL, params);
     if (data.error) throw new Error(data.error);
-    if (data.marathonName) setTitle(data.marathonName);
+
+    activeMarathons = data.activeMarathons || [];
+    if (data.currentMarathon) {
+      currentMarathonId = data.currentMarathon.id;
+      setTitle(data.currentMarathon.name);
+    }
+    renderEventSelector();
+
     runners = data.rows || [];
     updateStats(); buildCats(); render();
     document.getElementById("last-updated").textContent = "Updated " + new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});
@@ -398,52 +405,6 @@ function render() {
 
 document.getElementById("search-input").addEventListener("input", function(){ q = this.value; render(); });
 
-/* MASTER SETTINGS LOGIC */
-async function openSettingsModal() {
-  document.getElementById("cfg-url").value = APPS_SCRIPT_URL;
-  document.getElementById("cfg-pw").value = "";
-  document.getElementById("cfg-err").className = "modal-error";
-
-  try {
-    const res = await jsonp(APPS_SCRIPT_URL, { action: "getConfig" });
-    if (res.config) {
-      document.getElementById("cfg-mname").value = res.config.marathonName || "";
-      document.getElementById("cfg-ssid").value = res.config.spreadsheetId || "";
-    }
-  } catch(e) {}
-
-  document.getElementById("settings-modal").style.display = "flex";
-}
-function closeSettingsModal() { document.getElementById("settings-modal").style.display = "none"; }
-
-async function saveMasterConfig() {
-  const mName = document.getElementById("cfg-mname").value.trim();
-  const ssId = document.getElementById("cfg-ssid").value.trim();
-  const newUrl = document.getElementById("cfg-url").value.trim();
-  const pw = document.getElementById("cfg-pw").value;
-
-  if (!pw) return setCfgErr("Please enter master password.");
-  if (newUrl) {
-    APPS_SCRIPT_URL = newUrl;
-    localStorage.setItem("master_apps_script_url", newUrl);
-  }
-
-  try {
-    const res = await jsonp(APPS_SCRIPT_URL, {
-      action: "saveConfig",
-      password: pw,
-      marathonName: mName,
-      spreadsheetId: ssId
-    });
-
-    if (res.error) throw new Error(res.error);
-    toast("Master config updated successfully!");
-    closeSettingsModal();
-    fetchData();
-  } catch(e) { setCfgErr(e.message); }
-}
-function setCfgErr(msg) { const el = document.getElementById("cfg-err"); el.textContent = msg; el.className = "modal-error show"; }
-
 /* PAYMENT MODAL LOGIC */
 function openPayModal(rowIndex, name) {
   pendingPay = { rowIndex, name };
@@ -514,7 +475,13 @@ async function confirmPayment() {
   if (!pw) return setPayErr("Please enter admin password.");
 
   try {
-    const res = await jsonp(APPS_SCRIPT_URL, { action: "markPaid", rowIndex: pendingPay.rowIndex, password: pw, details: detailsStr });
+    const res = await jsonp(APPS_SCRIPT_URL, {
+      action: "markPaid",
+      marathonId: currentMarathonId,
+      rowIndex: pendingPay.rowIndex,
+      password: pw,
+      details: detailsStr
+    });
     if (res.error) throw new Error(res.error);
     const r = runners.find(x => x.__rowIndex === pendingPay.rowIndex);
     if (r) { r[COL.PAID] = "Yes"; r[COL.PAY_DETAILS] = detailsStr; }
@@ -560,7 +527,13 @@ async function confirmBibHandover() {
   if (!pw) return setBibErr("Please enter admin password.");
 
   try {
-    const res = await jsonp(APPS_SCRIPT_URL, { action: "markBibHandover", rowIndex: pendingBib.rowIndex, password: pw, handoverData: handoverStr });
+    const res = await jsonp(APPS_SCRIPT_URL, {
+      action: "markBibHandover",
+      marathonId: currentMarathonId,
+      rowIndex: pendingBib.rowIndex,
+      password: pw,
+      handoverData: handoverStr
+    });
     if (res.error) throw new Error(res.error);
     const r = runners.find(x => x.__rowIndex === pendingBib.rowIndex);
     if (r) { r[COL.BIB_HANDOVER] = handoverStr; }
