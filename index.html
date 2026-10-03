@@ -159,6 +159,9 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:2
     <div class="modal-handle"></div>
     <div class="modal-runner-name" id="p-name">Runner Name</div>
     <div class="modal-sub" id="p-meta">Payment Processing</div>
+
+    <div class="modal-label">Amount (₹)</div>
+    <input class="modal-input" id="p-amount" type="number" placeholder="Enter amount (e.g. 649)" />
     
     <div class="modal-label">Payment Method</div>
     <div class="opt-grid">
@@ -229,14 +232,16 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:2
       <div class="detail-item"><div class="detail-label">Race Category</div><div class="detail-val" id="d-race">—</div></div>
       <div class="detail-item"><div class="detail-label">WhatsApp Number</div><div class="detail-val" id="d-phone">—</div></div>
       <div class="detail-item"><div class="detail-label">T-Shirt Size</div><div class="detail-val" id="d-tshirt">—</div></div>
-      <div class="detail-item"><div class="detail-label">Payment Details (Mode)</div><div class="detail-val" id="d-paym">—</div></div>
-      <div class="detail-item"><div class="detail-label">BIB Kit Status (Kit Delivered)</div><div class="detail-val" id="d-bibm">—</div></div>
+      <div class="detail-item"><div class="detail-label">Payment Mode (Col M)</div><div class="detail-val" id="d-paym">—</div></div>
+      <div class="detail-item"><div class="detail-label">Amount Paid (Col N)</div><div class="detail-val" id="d-amt">—</div></div>
+      <div class="detail-item"><div class="detail-label">BIB Kit Status (Col O)</div><div class="detail-val" id="d-bibm">—</div></div>
     </div>
     <button class="modal-cancel-btn" onclick="closeDetailsModal()">Close</button>
   </div>
 </div>
 
 <script>
+// Replace this with your newly deployed Web App URL from Google Apps Script
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwAV_NR9ZIf9EGko2W8vWkP4WumdgtHU7yWo0eoQTmavGfBeVbyNvb6gVzRfU6WQBi3/exec";
 const REFRESH_MS = 300000;
 
@@ -250,6 +255,7 @@ const COL = {
   DOB: "Date of birth",
   TSHIRT: "T Shirts Size",
   PAY_DETAILS: "Mode",
+  AMOUNT: "Amount",
   BIB_HANDOVER: "Kit Delivered",
   BIB_NO: "BIB No"
 };
@@ -451,6 +457,7 @@ function openPayModal(rowIndex, name) {
   pendingPay = { rowIndex, name };
   payMethod = ""; upiSub = "";
   document.getElementById("p-name").textContent = name;
+  document.getElementById("p-amount").value = "";
   document.getElementById("m-cash").className = "opt-btn";
   document.getElementById("m-upi").className = "opt-btn";
   document.getElementById("upi-sub-section").style.display = "none";
@@ -497,7 +504,10 @@ function selectUpiSub(sub) {
 async function confirmPayment() {
   if (!pendingPay) return;
   const pw = document.getElementById("p-pw").value;
+  const amtVal = document.getElementById("p-amount").value.trim();
   const dynVal = document.getElementById("dyn-input").value.trim();
+
+  if (!amtVal || isNaN(amtVal) || Number(amtVal) <= 0) return setPayErr("Please enter a valid payment amount.");
 
   let detailsStr = "";
   if (payMethod === 'cash') {
@@ -523,7 +533,8 @@ async function confirmPayment() {
       marathonId: currentMarathonId,
       rowIndex: pendingPay.rowIndex,
       password: pw,
-      details: detailsStr
+      details: detailsStr,
+      amount: amtVal
     });
     if (res.error) throw new Error(res.error);
     fetchData(); closePayModal();
@@ -598,6 +609,9 @@ function openDetailsModal(rowIndex) {
   
   // Column M / Mode
   const paym = getFieldValue(r, ["Mode", "Payment Details", "Payment String"]);
+
+  // Column N / Amount
+  const amt = getFieldValue(r, ["Amount", "Amount Paid"]);
   
   // Column O / Kit Delivered
   const bibm = getFieldValue(r, ["Kit Delivered", "BIB Kit Status", "BIB Kit Details"]);
@@ -613,6 +627,7 @@ function openDetailsModal(rowIndex) {
   document.getElementById("d-phone").textContent = phone || "—";
   document.getElementById("d-tshirt").textContent = tshirt || "—";
   document.getElementById("d-paym").textContent = paym || "—";
+  document.getElementById("d-amt").textContent = amt ? ("₹" + amt) : "—";
   document.getElementById("d-bibm").textContent = bibm || "—";
   document.getElementById("details-modal").style.display = "flex";
 }
