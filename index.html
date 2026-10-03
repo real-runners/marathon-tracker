@@ -455,6 +455,7 @@ function openPayModal(rowIndex, name) {
   document.getElementById("m-upi").className = "opt-btn";
   document.getElementById("upi-sub-section").style.display = "none";
   document.getElementById("dynamic-input-section").style.display = "none";
+  document.getElementById("dyn-input").value = "";
   document.getElementById("p-pw").value = "";
   document.getElementById("p-err").className = "modal-error";
   document.getElementById("pay-modal").style.display = "flex";
@@ -473,6 +474,7 @@ function selectPayMethod(m) {
     dynSec.style.display = "block";
     document.getElementById("dyn-label").textContent = "Handed-over Person Name";
     document.getElementById("dyn-input").placeholder = "Enter receiver name";
+    document.getElementById("dyn-input").maxLength = 50;
   } else {
     upiSec.style.display = "block";
     dynSec.style.display = "none";
@@ -486,13 +488,10 @@ function selectUpiSub(sub) {
   document.getElementById("u-org").className = "opt-btn " + (sub==='org'?'active':'');
   document.getElementById("u-coord").className = "opt-btn " + (sub==='coord'?'active':'');
   const dynSec = document.getElementById("dynamic-input-section");
-  if (sub === 'org') {
-    dynSec.style.display = "block";
-    document.getElementById("dyn-label").textContent = "UPI Reference ID";
-    document.getElementById("dyn-input").placeholder = "Enter transaction ID";
-  } else {
-    dynSec.style.display = "none";
-  }
+  dynSec.style.display = "block";
+  document.getElementById("dyn-label").textContent = "Last 4 Digits of UPI Txn ID";
+  document.getElementById("dyn-input").placeholder = "e.g. 8492";
+  document.getElementById("dyn-input").maxLength = 4;
 }
 
 async function confirmPayment() {
@@ -505,12 +504,15 @@ async function confirmPayment() {
     if (!dynVal) return setPayErr("Please enter cash recipient name.");
     detailsStr = "Cash > " + dynVal;
   } else if (payMethod === 'upi') {
+    if (!upiSub) return setPayErr("Please select UPI Receiver (Organizer or Coordinator).");
+    if (!dynVal) return setPayErr("Please enter the last 4 digits of the UPI Txn ID.");
+    if (dynVal.length !== 4 || !/^\d{4}$/.test(dynVal)) return setPayErr("Please enter exactly 4 numeric digits.");
+
     if (upiSub === 'org') {
-      if (!dynVal) return setPayErr("Please enter UPI Reference ID.");
       detailsStr = "UPI > Organizer > " + dynVal;
     } else if (upiSub === 'coord') {
-      detailsStr = "UPI > Coordinator";
-    } else return setPayErr("Please select UPI Receiver type.");
+      detailsStr = "UPI > Coordinator > " + dynVal;
+    }
   } else return setPayErr("Please select a payment method.");
 
   if (!pw) return setPayErr("Please enter admin password.");
