@@ -182,8 +182,8 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:2
       <input class="modal-input" id="dyn-input" type="text" />
     </div>
 
-    <div class="modal-label">Admin Password</div>
-    <input class="modal-input" id="p-pw" type="password" placeholder="••••••••" />
+    <div class="modal-label">Admin PIN</div>
+    <input class="modal-input" id="p-pw" type="password" placeholder="••••" />
     <div class="modal-error" id="p-err"></div>
     <button class="modal-confirm-btn" id="p-btn" onclick="confirmPayment()">✓ Save Payment</button>
     <button class="modal-cancel-btn" onclick="closePayModal()">Cancel</button>
@@ -208,8 +208,8 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:2
       <input class="modal-input" id="b-messenger-input" type="text" placeholder="Enter messenger name" />
     </div>
 
-    <div class="modal-label">Admin Password</div>
-    <input class="modal-input" id="b-pw" type="password" placeholder="••••••••" />
+    <div class="modal-label">Admin PIN</div>
+    <input class="modal-input" id="b-pw" type="password" placeholder="••••" />
     <div class="modal-error" id="b-err"></div>
     <button class="modal-confirm-btn" id="b-btn" onclick="confirmBibHandover()">✓ Confirm Handover</button>
     <button class="modal-cancel-btn" onclick="closeBibModal()">Cancel</button>
@@ -235,29 +235,30 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:2
       <div class="detail-item"><div class="detail-label">Payment Mode (Col M)</div><div class="detail-val" id="d-paym">—</div></div>
       <div class="detail-item"><div class="detail-label">Amount Paid (Col N)</div><div class="detail-val" id="d-amt">—</div></div>
       <div class="detail-item"><div class="detail-label">BIB Kit Status (Col O)</div><div class="detail-val" id="d-bibm">—</div></div>
+      <div class="detail-item"><div class="detail-label">Logged User (Col Q)</div><div class="detail-val" id="d-user">—</div></div>
     </div>
     <button class="modal-cancel-btn" onclick="closeDetailsModal()">Close</button>
   </div>
 </div>
 
 <script>
-// Replace this with your newly deployed Web App URL from Google Apps Script
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwAV_NR9ZIf9EGko2W8vWkP4WumdgtHU7yWo0eoQTmavGfBeVbyNvb6gVzRfU6WQBi3/exec";
 const REFRESH_MS = 300000;
 
+// Device Fingerprinting for Ban Enforcement
+function getDeviceId() {
+  let devId = localStorage.getItem("__m_dev_id");
+  if (!devId) {
+    devId = "DEV_" + Math.random().toString(36).substring(2) + Date.now().toString(36);
+    localStorage.setItem("__m_dev_id", devId);
+  }
+  return devId;
+}
+
 const COL = {
-  FIRST: "First Name",
-  LAST: "Last Name",
-  GENDER: "Gender",
-  RACE: "Race Category",
-  PHONE: "WhatsApp Number",
-  PAID: "Paid",
-  DOB: "Date of birth",
-  TSHIRT: "T Shirts Size",
-  PAY_DETAILS: "Mode",
-  AMOUNT: "Amount",
-  BIB_HANDOVER: "Kit Delivered",
-  BIB_NO: "BIB No"
+  FIRST: "First Name", LAST: "Last Name", GENDER: "Gender", RACE: "Race Category",
+  PHONE: "WhatsApp Number", PAID: "Paid", DOB: "Date of birth", TSHIRT: "T Shirts Size",
+  PAY_DETAILS: "Mode", AMOUNT: "Amount", BIB_HANDOVER: "Kit Delivered", BIB_NO: "BIB No", USER: "User"
 };
 
 let runners=[], payFilter="all", bibFilter="all", cat="all", q="", pendingPay=null, pendingBib=null;
@@ -296,7 +297,7 @@ function jsonp(url, params) {
     const timeout = setTimeout(() => { cleanup(); reject(new Error("Request timed out.")); }, 15000);
     window[cbName] = function(data) { cleanup(); resolve(data); };
     function cleanup() { clearTimeout(timeout); delete window[cbName]; const el = document.getElementById(cbName); if (el) el.remove(); }
-    const allParams = Object.assign({ callback: cbName }, params);
+    const allParams = Object.assign({ callback: cbName, deviceId: getDeviceId() }, params);
     const qs = Object.keys(allParams).map(k => encodeURIComponent(k) + "=" + encodeURIComponent(allParams[k])).join("&");
     const script = document.createElement("script");
     script.id = cbName; script.src = url + "?" + qs;
@@ -341,7 +342,12 @@ async function fetchData() {
     runners = data.rows || [];
     updateStats(); buildCats(); render();
     document.getElementById("last-updated").textContent = "Updated " + new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});
-  } catch(e) { console.error(e); }
+  } catch(e) { 
+    console.error(e);
+    if(e.message.includes("ACCESS_DENIED")) {
+      document.getElementById("list").innerHTML = `<div class="state-box" style="color:var(--unpaid-text);font-weight:700;">${e.message}</div>`;
+    }
+  }
 }
 
 const isPaid = v => v && /^(yes|paid|true|1|y)$/i.test(String(v).trim());
@@ -503,7 +509,7 @@ function selectUpiSub(sub) {
 
 async function confirmPayment() {
   if (!pendingPay) return;
-  const pw = document.getElementById("p-pw").value;
+  const pin = document.getElementById("p-pw").value.trim();
   const amtVal = document.getElementById("p-amount").value.trim();
   const dynVal = document.getElementById("dyn-input").value.trim();
 
@@ -525,14 +531,14 @@ async function confirmPayment() {
     }
   } else return setPayErr("Please select a payment method.");
 
-  if (!pw) return setPayErr("Please enter admin password.");
+  if (!pin) return setPayErr("Please enter your Admin PIN.");
 
   try {
     const res = await jsonp(APPS_SCRIPT_URL, {
       action: "markPaid",
       marathonId: currentMarathonId,
       rowIndex: pendingPay.rowIndex,
-      password: pw,
+      pin: pin,
       details: detailsStr,
       amount: amtVal
     });
@@ -566,7 +572,7 @@ function selectBibTarget(t) {
 
 async function confirmBibHandover() {
   if (!pendingBib) return;
-  const pw = document.getElementById("b-pw").value;
+  const pin = document.getElementById("b-pw").value.trim();
   const mName = document.getElementById("b-messenger-input").value.trim();
 
   let handoverStr = "";
@@ -576,14 +582,14 @@ async function confirmBibHandover() {
     handoverStr = "Messenger > " + mName;
   } else return setBibErr("Please select handover option.");
 
-  if (!pw) return setBibErr("Please enter admin password.");
+  if (!pin) return setBibErr("Please enter your Admin PIN.");
 
   try {
     const res = await jsonp(APPS_SCRIPT_URL, {
       action: "markBibHandover",
       marathonId: currentMarathonId,
       rowIndex: pendingBib.rowIndex,
-      password: pw,
+      pin: pin,
       handoverData: handoverStr
     });
     if (res.error) throw new Error(res.error);
@@ -606,15 +612,10 @@ function openDetailsModal(rowIndex) {
   const dob = getFieldValue(r, [COL.DOB, "Date of birth", "DOB"]);
   const phone = getFieldValue(r, [COL.PHONE, "WhatsApp Number", "Phone"]);
   const tshirt = getFieldValue(r, [COL.TSHIRT, "T Shirts Size", "T-Shirt Size"]);
-  
-  // Column M / Mode
   const paym = getFieldValue(r, ["Mode", "Payment Details", "Payment String"]);
-
-  // Column N / Amount
   const amt = getFieldValue(r, ["Amount", "Amount Paid"]);
-  
-  // Column O / Kit Delivered
   const bibm = getFieldValue(r, ["Kit Delivered", "BIB Kit Status", "BIB Kit Details"]);
+  const user = getFieldValue(r, ["User", "Admin User", "Logged User"]);
 
   document.getElementById("d-name").textContent = (first + " " + last).trim() || "Runner Profile";
   document.getElementById("d-meta").textContent = extractKm(race);
@@ -629,6 +630,7 @@ function openDetailsModal(rowIndex) {
   document.getElementById("d-paym").textContent = paym || "—";
   document.getElementById("d-amt").textContent = amt ? ("₹" + amt) : "—";
   document.getElementById("d-bibm").textContent = bibm || "—";
+  document.getElementById("d-user").textContent = user || "—";
   document.getElementById("details-modal").style.display = "flex";
 }
 function closeDetailsModal() { document.getElementById("details-modal").style.display = "none"; }
